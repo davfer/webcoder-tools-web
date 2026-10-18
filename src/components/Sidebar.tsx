@@ -115,15 +115,6 @@ export const Sidebar: React.FC<Props> = ({
           );
         })}
       </div>
-
-      {/* Sidebar Footer Hint */}
-      <div className="pt-3 border-t border-slate-800/80 text-[11px] font-mono text-slate-500 space-y-1">
-        <div className="flex items-center gap-1.5">
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-          <span>Local engine ready</span>
-        </div>
-        <p className="text-slate-600">Zero network leaks for secrets and tokens.</p>
-      </div>
     </aside>
   );
 };

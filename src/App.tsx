@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { ToolCategory, PresetPayload } from './types';
-import { SAMPLE_PRESETS } from './utils/presets';
+import { ToolCategory } from './types';
 import { networkTracker } from './services/networkTracker';
 
 import { analyzeBase64 } from './utils/base64Engine';
@@ -37,9 +36,9 @@ import { ArrowLeft, Sparkles, Filter, CheckCircle2 } from 'lucide-react';
 export default function App() {
   const [input, setInput] = useState<string>(() => {
     try {
-      return localStorage.getItem('webcoder_input_stream') || SAMPLE_PRESETS[1].content; // default sample URL
+      return localStorage.getItem('webcoder_input_stream') || '';
     } catch {
-      return SAMPLE_PRESETS[1].content;
+      return '';
     }
   });
 
@@ -109,20 +108,21 @@ export default function App() {
     };
   }, [input]);
 
-  // Detector matching map
+  // Detector matching map (only match when input is present)
+  const hasInput = input.trim().length > 0;
   const matches: Record<ToolCategory, boolean> = {
     all: true,
-    uri: uriResult.isUri,
-    jwt: jwtResult.isJwt,
-    jwks: jwtResult.isJwt || activeCategory === 'jwks' || input.toLowerCase().includes('jwks'),
-    json: jsonResult.isValidJson,
-    hash: input.trim().length > 0,
-    k8s: k8sResult.isK8s,
-    base64: base64Result.isBase64,
-    hexdec: hexDecResult.isConvertible,
-    ip: ipResult.isIp,
-    certs: certAnalysis.isCert,
-    oidc: activeCategory === 'oidc' || jwtResult.isJwt || input.toLowerCase().includes('oauth'),
+    uri: hasInput && uriResult.isUri,
+    jwt: hasInput && jwtResult.isJwt,
+    jwks: hasInput && ((jwtResult.isJwt && !!jwtResult.payload?.iss) || input.toLowerCase().includes('jwks')),
+    json: hasInput && jsonResult.isValidJson,
+    hash: hasInput,
+    k8s: hasInput && k8sResult.isK8s,
+    base64: hasInput && base64Result.isBase64,
+    hexdec: hasInput && hexDecResult.isConvertible,
+    ip: hasInput && ipResult.isIp,
+    certs: hasInput && certAnalysis.isCert,
+    oidc: activeCategory === 'oidc' || (hasInput && (jwtResult.isJwt || input.toLowerCase().includes('oauth'))),
   };
 
   const handleToggleDetector = (cat: ToolCategory) => {
@@ -136,14 +136,6 @@ export default function App() {
     localStorage.removeItem('webcoder_input_stream');
     networkTracker.clear();
     setInput('');
-  };
-
-  const handleLoadPreset = (preset: PresetPayload) => {
-    setInput(preset.content);
-    setFocusedTool(null);
-    if (preset.category !== 'all') {
-      setActiveCategory(preset.category);
-    }
   };
 
   const isToolVisible = (toolId: ToolCategory): boolean => {
@@ -170,17 +162,7 @@ export default function App() {
   return (
     <div className="flex flex-col min-h-screen bg-[#0B0F17] text-slate-100">
       {/* Top Header */}
-      <Header
-        activeTab={activeCategory}
-        onSelectTab={(tab) => {
-          setActiveCategory(tab);
-          setFocusedTool(null);
-        }}
-        onLoadPreset={handleLoadPreset}
-        onOpenSettings={() => setIsSettingsOpen(true)}
-        onOpenNetwork={() => setIsNetworkDrawerOpen(true)}
-        networkCallCount={networkCount}
-      />
+      <Header />
 
       {/* Main Workspace with Sidebar */}
       <div className="flex flex-1 overflow-hidden">
@@ -222,28 +204,18 @@ export default function App() {
             onClear={() => setInput('')}
           />
 
-          {/* Detection summary bar */}
-          <div className="flex items-center justify-between text-xs font-mono text-slate-400 px-1">
-            <div className="flex items-center gap-2">
-              <span className="text-slate-500">DETECTED PAYLOADS:</span>
-              <span className="text-cyan-400 font-semibold">{visibleCount} tool cards active</span>
-              {activeCategory !== 'all' && (
-                <span className="text-slate-500">· Filtered to {activeCategory.toUpperCase()}</span>
-              )}
+          {/* Detection summary bar - only shown when input is present */}
+          {hasInput && (
+            <div className="flex items-center justify-between text-xs font-mono text-slate-400 px-1">
+              <div className="flex items-center gap-2">
+                <span className="text-slate-500">DETECTED PAYLOADS:</span>
+                <span className="text-cyan-400 font-semibold">{visibleCount} tool cards active</span>
+                {activeCategory !== 'all' && (
+                  <span className="text-slate-500">· Filtered to {activeCategory.toUpperCase()}</span>
+                )}
+              </div>
             </div>
-
-            <div className="flex items-center gap-2">
-              {SAMPLE_PRESETS.slice(0, 4).map((p) => (
-                <button
-                  key={p.name}
-                  onClick={() => handleLoadPreset(p)}
-                  className="hidden md:inline-block px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-[11px] text-slate-400 hover:text-cyan-300 transition-colors"
-                >
-                  +{p.name.split(' ')[0]}
-                </button>
-              ))}
-            </div>
-          </div>
+          )}
 
           {/* Render Active Detector Cards */}
           <div className="space-y-4">
@@ -367,27 +339,16 @@ export default function App() {
               />
             )}
 
-            {/* Empty state when no detectors matched */}
-            {visibleCount === 0 && (
-              <div className="p-8 text-center bg-[#111827] border border-slate-800 rounded-xl space-y-3 font-mono text-xs">
-                <Sparkles className="w-6 h-6 text-cyan-400 mx-auto" />
-                <h3 className="text-sm font-semibold text-slate-200">
+            {/* Unmatched state - only displayed when input was provided but nothing matched */}
+            {hasInput && visibleCount === 0 && (
+              <div className="p-8 text-center bg-[#111827] border border-slate-800 rounded-xl space-y-2 font-mono text-xs">
+                <Sparkles className="w-5 h-5 text-slate-500 mx-auto" />
+                <h3 className="text-sm font-semibold text-slate-300">
                   No automated detectors matched current input
                 </h3>
-                <p className="text-slate-400 max-w-md mx-auto">
-                  Try pasting a JWT token, an API URL with parameters, a Kubernetes Secret, an X.509 PEM certificate, or select a sample preset above.
+                <p className="text-slate-500 max-w-md mx-auto">
+                  Paste a JWT token, an API URL with parameters, a Kubernetes Secret, an X.509 PEM certificate, a Base64 string, or hash into the textarea above.
                 </p>
-                <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
-                  {SAMPLE_PRESETS.map((p) => (
-                    <button
-                      key={p.name}
-                      onClick={() => handleLoadPreset(p)}
-                      className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 transition-colors"
-                    >
-                      Load {p.name}
-                    </button>
-                  ))}
-                </div>
               </div>
             )}
           </div>

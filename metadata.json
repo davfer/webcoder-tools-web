@@ -2,5 +2,7 @@
   "name": "WebCoder Tools",
   "description": "AllTheThings developer and security workbench with automatic payload detection, local cryptographic analyzers, URI diagnostics, and OIDC testing.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

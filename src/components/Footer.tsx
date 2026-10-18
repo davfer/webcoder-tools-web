@@ -1,5 +1,5 @@
 import React from 'react';
-import { Activity, Github, Settings, ShieldCheck } from 'lucide-react';
+import { Activity, Github, Settings } from 'lucide-react';
 
 interface Props {
   networkCallCount: number;
@@ -14,15 +14,11 @@ export const Footer: React.FC<Props> = ({
 }) => {
   return (
     <footer className="sticky bottom-0 z-30 flex items-center justify-between px-6 py-2.5 bg-[#0B0F17]/95 backdrop-blur-md border-t border-slate-800/80 font-mono text-xs text-slate-400">
-      {/* Left: Version & Security Notice */}
+      {/* Left: Version */}
       <div className="flex items-center gap-3">
         <span className="text-slate-300 font-semibold">WebCoder Tools</span>
         <span className="text-slate-600">·</span>
         <span className="text-slate-500">v1.0.0-pwa</span>
-        <span className="hidden sm:inline-flex items-center gap-1 text-[11px] text-emerald-400/90 bg-emerald-950/40 border border-emerald-800/40 px-2 py-0.5 rounded">
-          <ShieldCheck className="w-3 h-3" />
-          <span>Local Engine & Zero Leak</span>
-        </span>
       </div>
 
       {/* Right: Network Calls Counter, GitHub, Settings */}
@@ -53,16 +49,6 @@ export const Footer: React.FC<Props> = ({
           <Github className="w-3.5 h-3.5" />
           <span className="hidden md:inline">GitHub</span>
         </a>
-
-        {/* Download Build Artifact link */}
-        <button
-          onClick={onOpenSettings}
-          className="flex items-center gap-1.5 text-slate-400 hover:text-cyan-300 transition-colors"
-          title="Download Built Website Artifact & CI Status"
-        >
-          <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-          <span className="hidden md:inline">Build Artifact</span>
-        </button>
 
         {/* Settings button */}
         <button
