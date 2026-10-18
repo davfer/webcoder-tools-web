@@ -94,6 +94,16 @@ export const HashBox: React.FC<Props> = ({
               Password: {passwordScore.score} ({passwordScore.entropyBits} bits)
             </span>
           )}
+
+          <button
+            onClick={() => handleCopy('sha256', hashes['SHA-256'] || hashes['MD5'] || '')}
+            className="p-1.5 rounded bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+            title={copiedKey === 'sha256' ? 'Copied SHA-256' : 'Copy SHA-256 Digest'}
+            aria-label="Copy SHA-256 Digest"
+          >
+            {copiedKey === 'sha256' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+          </button>
+
           <button
             onClick={onToggleFocus}
             className="p-1 text-slate-400 hover:text-amber-400 rounded transition-colors"
@@ -129,10 +139,11 @@ export const HashBox: React.FC<Props> = ({
                 </div>
                 <button
                   onClick={() => handleCopy(alg, digest)}
-                  className="flex items-center gap-1 ml-2 px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white shrink-0 text-xs"
+                  className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white shrink-0 transition-colors"
+                  title={copiedKey === alg ? 'Copied' : `Copy ${alg}`}
+                  aria-label={`Copy ${alg}`}
                 >
-                  {copiedKey === alg ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                  <span>{copiedKey === alg ? 'Copied' : 'Copy'}</span>
+                  {copiedKey === alg ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 </button>
               </div>
             ))}

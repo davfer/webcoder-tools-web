@@ -47,6 +47,15 @@ export const HexDecBox: React.FC<Props> = ({
 
         <div className="flex items-center gap-2">
           <button
+            onClick={() => handleCopy('hex', analysis.hex)}
+            className="p-1.5 rounded bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+            title={copiedKey === 'hex' ? 'Copied Hex' : 'Copy Hexadecimal'}
+            aria-label="Copy Hexadecimal"
+          >
+            {copiedKey === 'hex' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+          </button>
+
+          <button
             onClick={onToggleFocus}
             className="p-1 text-slate-400 hover:text-indigo-400 rounded transition-colors"
             title={isFocused ? 'Exit Focus Mode' : 'Focus Base Converter'}
@@ -70,10 +79,11 @@ export const HexDecBox: React.FC<Props> = ({
             <button
               onClick={() => handleCopy(f.key, f.value)}
               disabled={!f.value}
-              className="flex items-center gap-1 ml-2 px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white shrink-0 text-xs disabled:opacity-30"
+              className="p-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white shrink-0 disabled:opacity-30 transition-colors"
+              title={copiedKey === f.key ? 'Copied' : `Copy ${f.label}`}
+              aria-label={`Copy ${f.label}`}
             >
               {copiedKey === f.key ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-              <span>{copiedKey === f.key ? 'Copied' : 'Copy'}</span>
             </button>
           </div>
         ))}

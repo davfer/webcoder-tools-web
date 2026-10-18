@@ -119,6 +119,17 @@ export const JwksBox: React.FC<Props> = ({
         </div>
 
         <div className="flex items-center gap-2">
+          {(result?.jwksUri || issuerClaim) && (
+            <button
+              onClick={() => handleCopy(result?.jwksUri || issuerClaim || '')}
+              className="p-1.5 rounded bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+              title={copied ? 'Copied' : 'Copy JWKS URI / Issuer'}
+              aria-label="Copy JWKS URI / Issuer"
+            >
+              {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+            </button>
+          )}
+
           <button
             onClick={handleVerify}
             disabled={loading}
@@ -187,8 +198,18 @@ export const JwksBox: React.FC<Props> = ({
               <span className="font-semibold text-purple-300">DISCOVERED ISSUER:</span>
               <span className="text-[11px] text-slate-500">Extracted from JWT payload 'iss'</span>
             </div>
-            <div className="p-2 bg-[#0B0F17] rounded border border-slate-800 text-slate-200 select-all truncate">
-              {issuerClaim || '[No "iss" claim found in token. Please use Custom JWKS URL or JSON]'}
+            <div className="flex items-center justify-between p-2 bg-[#0B0F17] rounded border border-slate-800 text-slate-200">
+              <span className="select-all truncate mr-2">{issuerClaim || '[No "iss" claim found in token. Please use Custom JWKS URL or JSON]'}</span>
+              {issuerClaim && (
+                <button
+                  onClick={() => handleCopy(issuerClaim)}
+                  className="p-1 text-slate-400 hover:text-white rounded hover:bg-slate-800 transition-colors shrink-0"
+                  title="Copy Issuer URL"
+                  aria-label="Copy Issuer URL"
+                >
+                  {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -319,9 +340,11 @@ export const JwksBox: React.FC<Props> = ({
                     </div>
                     <button
                       onClick={() => handleCopy(result.jwksUri || '')}
-                      className="text-slate-400 hover:text-white shrink-0"
+                      className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white shrink-0 transition-colors"
+                      title={copied ? 'Copied JWKS URI' : 'Copy JWKS URI'}
+                      aria-label="Copy JWKS URI"
                     >
-                      {copied ? 'Copied' : 'Copy URI'}
+                      {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                     </button>
                   </div>
                 )}

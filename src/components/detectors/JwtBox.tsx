@@ -56,10 +56,11 @@ export const JwtBox: React.FC<Props> = ({
 
           <button
             onClick={() => handleCopy(analysis.formattedPayload, 'payload')}
-            className="flex items-center gap-1 px-2.5 py-1 text-xs font-mono text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700 rounded transition-colors"
+            className="p-1.5 text-xs font-mono text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700 rounded transition-colors"
+            title={copiedSection === 'payload' ? 'Copied decoded payload' : 'Copy Decoded Payload'}
+            aria-label="Copy Decoded Payload"
           >
             {copiedSection === 'payload' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-            <span>Payload</span>
           </button>
 
           <button
@@ -113,9 +114,11 @@ export const JwtBox: React.FC<Props> = ({
               <span>HEADER (JOSE)</span>
               <button
                 onClick={() => handleCopy(analysis.formattedHeader, 'header')}
-                className="hover:text-cyan-200"
+                className="p-1 text-slate-400 hover:text-cyan-200 rounded hover:bg-slate-800/60 transition-colors"
+                title={copiedSection === 'header' ? 'Copied header' : 'Copy Header'}
+                aria-label="Copy Header"
               >
-                {copiedSection === 'header' ? 'Copied!' : 'Copy'}
+                {copiedSection === 'header' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
               </button>
             </div>
             <pre className="p-3 bg-[#0B0F17] rounded-lg border border-slate-800/90 text-xs font-mono text-cyan-300 overflow-x-auto max-h-48 whitespace-pre">
@@ -128,9 +131,11 @@ export const JwtBox: React.FC<Props> = ({
               <span>PAYLOAD (CLAIMS)</span>
               <button
                 onClick={() => handleCopy(analysis.formattedPayload, 'payload')}
-                className="hover:text-violet-200"
+                className="p-1 text-slate-400 hover:text-violet-200 rounded hover:bg-slate-800/60 transition-colors"
+                title={copiedSection === 'payload' ? 'Copied payload' : 'Copy Payload'}
+                aria-label="Copy Payload"
               >
-                {copiedSection === 'payload' ? 'Copied!' : 'Copy'}
+                {copiedSection === 'payload' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
               </button>
             </div>
             <pre className="p-3 bg-[#0B0F17] rounded-lg border border-slate-800/90 text-xs font-mono text-violet-300 overflow-x-auto max-h-48 whitespace-pre">

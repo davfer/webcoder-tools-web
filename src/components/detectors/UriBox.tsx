@@ -154,10 +154,11 @@ export const UriBox: React.FC<Props> = ({
 
           <button
             onClick={() => handleCopy(analysis.raw)}
-            className="flex items-center gap-1 px-2.5 py-1 text-xs font-mono text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700 rounded transition-colors"
+            className="p-1.5 text-xs font-mono text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700 rounded transition-colors"
+            title={copied ? 'Copied URL' : 'Copy URL'}
+            aria-label="Copy URL"
           >
             {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-            <span>Copy URL</span>
           </button>
 
           <button
@@ -199,7 +200,7 @@ export const UriBox: React.FC<Props> = ({
                   <tr className="border-b border-slate-800 text-slate-500">
                     <th className="pb-1.5 font-medium">KEY</th>
                     <th className="pb-1.5 font-medium">VALUE</th>
-                    <th className="pb-1.5 text-right w-16">ACTION</th>
+                    <th className="pb-1.5 text-right w-20">ACTIONS</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60">
@@ -221,11 +222,20 @@ export const UriBox: React.FC<Props> = ({
                           className="w-full bg-slate-900/70 border border-slate-800 rounded px-2 py-1 text-slate-200 focus:outline-none focus:border-sky-500"
                         />
                       </td>
-                      <td className="py-1.5 text-right">
+                      <td className="py-1.5 text-right whitespace-nowrap">
+                        <button
+                          onClick={() => handleCopy(`${p.key}=${p.value}`)}
+                          className="p-1 text-slate-400 hover:text-sky-300 rounded hover:bg-slate-800/60 transition-colors mr-1"
+                          title="Copy parameter"
+                          aria-label="Copy parameter"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
                         <button
                           onClick={() => removeParam(idx)}
                           className="p-1 text-slate-500 hover:text-rose-400 rounded transition-colors"
                           title="Remove Parameter"
+                          aria-label="Remove Parameter"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -272,13 +282,33 @@ export const UriBox: React.FC<Props> = ({
               <div className="text-slate-500">Scheme</div>
               <div className="text-sky-300 font-semibold">{analysis.protocol || 'none'}</div>
             </div>
-            <div className="p-2.5 bg-[#0B0F17] rounded border border-slate-800">
-              <div className="text-slate-500">Host & Port</div>
-              <div className="text-slate-200 font-semibold truncate">{analysis.host}:{analysis.port}</div>
+            <div className="p-2.5 bg-[#0B0F17] rounded border border-slate-800 flex items-center justify-between">
+              <div className="truncate mr-1">
+                <div className="text-slate-500">Host & Port</div>
+                <div className="text-slate-200 font-semibold truncate">{analysis.host}:{analysis.port}</div>
+              </div>
+              <button
+                onClick={() => handleCopy(`${analysis.host}:${analysis.port}`)}
+                className="p-1 text-slate-400 hover:text-sky-300 rounded hover:bg-slate-800 transition-colors shrink-0"
+                title="Copy Host:Port"
+                aria-label="Copy Host:Port"
+              >
+                <Copy className="w-3.5 h-3.5" />
+              </button>
             </div>
-            <div className="p-2.5 bg-[#0B0F17] rounded border border-slate-800">
-              <div className="text-slate-500">Pathname</div>
-              <div className="text-slate-200 font-semibold truncate">{analysis.pathname || '/'}</div>
+            <div className="p-2.5 bg-[#0B0F17] rounded border border-slate-800 flex items-center justify-between">
+              <div className="truncate mr-1">
+                <div className="text-slate-500">Pathname</div>
+                <div className="text-slate-200 font-semibold truncate">{analysis.pathname || '/'}</div>
+              </div>
+              <button
+                onClick={() => handleCopy(analysis.pathname || '/')}
+                className="p-1 text-slate-400 hover:text-sky-300 rounded hover:bg-slate-800 transition-colors shrink-0"
+                title="Copy Pathname"
+                aria-label="Copy Pathname"
+              >
+                <Copy className="w-3.5 h-3.5" />
+              </button>
             </div>
             <div className="p-2.5 bg-[#0B0F17] rounded border border-slate-800">
               <div className="text-slate-500">Fragment (Hash)</div>

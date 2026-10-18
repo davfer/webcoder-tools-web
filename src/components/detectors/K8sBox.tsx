@@ -49,6 +49,15 @@ export const K8sBox: React.FC<Props> = ({
           )}
 
           <button
+            onClick={() => handleCopy('raw', rawInput)}
+            className="p-1.5 rounded bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+            title={copiedKey === 'raw' ? 'Copied Manifest' : 'Copy K8s Manifest'}
+            aria-label="Copy K8s Manifest"
+          >
+            {copiedKey === 'raw' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+          </button>
+
+          <button
             onClick={onToggleFocus}
             className="p-1 text-slate-400 hover:text-blue-400 rounded transition-colors"
             title={isFocused ? 'Exit Focus Mode' : 'Focus K8s Tool'}
@@ -96,9 +105,11 @@ export const K8sBox: React.FC<Props> = ({
                       </div>
                       <button
                         onClick={() => handleCopy(sec.key, showPlainSecrets ? sec.decodedValue : sec.base64Value)}
-                        className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 shrink-0 text-xs"
+                        className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white shrink-0 transition-colors"
+                        title={copiedKey === sec.key ? 'Copied' : `Copy secret value for ${sec.key}`}
+                        aria-label={`Copy secret value for ${sec.key}`}
                       >
-                        {copiedKey === sec.key ? 'Copied' : 'Copy'}
+                        {copiedKey === sec.key ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                       </button>
                     </div>
                   ))}

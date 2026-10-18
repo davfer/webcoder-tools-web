@@ -89,6 +89,17 @@ export const OidcBox: React.FC<Props> = ({
         </div>
 
         <div className="flex items-center gap-2">
+          {authUrl && (
+            <button
+              onClick={() => handleCopy('authUrl', authUrl)}
+              className="p-1.5 rounded bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+              title={copiedKey === 'authUrl' ? 'Copied Auth URL' : 'Copy Authorization URL'}
+              aria-label="Copy Authorization URL"
+            >
+              {copiedKey === 'authUrl' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+            </button>
+          )}
+
           <button
             onClick={refreshCredentials}
             className="flex items-center gap-1 px-2.5 py-1 text-xs font-mono rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
@@ -120,9 +131,11 @@ export const OidcBox: React.FC<Props> = ({
                   <span>code_verifier (Raw Entropy)</span>
                   <button
                     onClick={() => handleCopy('verifier', pkce.verifier)}
-                    className="hover:text-pink-300"
+                    className="p-1 text-slate-400 hover:text-pink-300 rounded hover:bg-slate-800/60 transition-colors"
+                    title={copiedKey === 'verifier' ? 'Copied' : 'Copy code_verifier'}
+                    aria-label="Copy code_verifier"
                   >
-                    {copiedKey === 'verifier' ? 'Copied' : 'Copy'}
+                    {copiedKey === 'verifier' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                   </button>
                 </div>
                 <div className="text-pink-300 font-semibold truncate select-all">{pkce.verifier}</div>
@@ -133,9 +146,11 @@ export const OidcBox: React.FC<Props> = ({
                   <span>code_challenge (SHA-256 Base64URL)</span>
                   <button
                     onClick={() => handleCopy('challenge', pkce.challenge)}
-                    className="hover:text-pink-300"
+                    className="p-1 text-slate-400 hover:text-pink-300 rounded hover:bg-slate-800/60 transition-colors"
+                    title={copiedKey === 'challenge' ? 'Copied' : 'Copy code_challenge'}
+                    aria-label="Copy code_challenge"
                   >
-                    {copiedKey === 'challenge' ? 'Copied' : 'Copy'}
+                    {copiedKey === 'challenge' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                   </button>
                 </div>
                 <div className="text-emerald-300 font-semibold truncate select-all">{pkce.challenge}</div>
@@ -148,9 +163,11 @@ export const OidcBox: React.FC<Props> = ({
                   <span>state (CSRF Token)</span>
                   <button
                     onClick={() => handleCopy('state', stateVal)}
-                    className="hover:text-pink-300"
+                    className="p-1 text-slate-400 hover:text-pink-300 rounded hover:bg-slate-800/60 transition-colors"
+                    title={copiedKey === 'state' ? 'Copied' : 'Copy state'}
+                    aria-label="Copy state"
                   >
-                    {copiedKey === 'state' ? 'Copied' : 'Copy'}
+                    {copiedKey === 'state' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                   </button>
                 </div>
                 <div className="text-slate-300 truncate select-all">{stateVal}</div>
@@ -161,9 +178,11 @@ export const OidcBox: React.FC<Props> = ({
                   <span>nonce (Replay Token Binding)</span>
                   <button
                     onClick={() => handleCopy('nonce', nonceVal)}
-                    className="hover:text-pink-300"
+                    className="p-1 text-slate-400 hover:text-pink-300 rounded hover:bg-slate-800/60 transition-colors"
+                    title={copiedKey === 'nonce' ? 'Copied' : 'Copy nonce'}
+                    aria-label="Copy nonce"
                   >
-                    {copiedKey === 'nonce' ? 'Copied' : 'Copy'}
+                    {copiedKey === 'nonce' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                   </button>
                 </div>
                 <div className="text-slate-300 truncate select-all">{nonceVal}</div>
@@ -178,9 +197,11 @@ export const OidcBox: React.FC<Props> = ({
             <span>COMPILED OIDC AUTHORIZATION REQUEST URL:</span>
             <button
               onClick={() => handleCopy('authUrl', authUrl)}
-              className="text-slate-400 hover:text-white"
+              className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+              title={copiedKey === 'authUrl' ? 'Copied Auth URL' : 'Copy Authorization URL'}
+              aria-label="Copy Authorization URL"
             >
-              {copiedKey === 'authUrl' ? 'Copied URL!' : 'Copy URL'}
+              {copiedKey === 'authUrl' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
             </button>
           </div>
           <div className="p-2 bg-slate-900/80 rounded border border-slate-800 text-slate-300 break-all select-all">
@@ -214,9 +235,11 @@ export const OidcBox: React.FC<Props> = ({
                     </button>
                     <button
                       onClick={() => handleCopy('idToken', mockTokens.idToken)}
-                      className="text-slate-400 hover:text-white"
+                      className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+                      title={copiedKey === 'idToken' ? 'Copied id_token' : 'Copy id_token'}
+                      aria-label="Copy id_token"
                     >
-                      {copiedKey === 'idToken' ? 'Copied' : 'Copy'}
+                      {copiedKey === 'idToken' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                     </button>
                   </div>
                 </div>
@@ -228,9 +251,11 @@ export const OidcBox: React.FC<Props> = ({
                   <span>access_token (Bearer):</span>
                   <button
                     onClick={() => handleCopy('accessToken', mockTokens.accessToken)}
-                    className="text-slate-400 hover:text-white"
+                    className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+                    title={copiedKey === 'accessToken' ? 'Copied access_token' : 'Copy access_token'}
+                    aria-label="Copy access_token"
                   >
-                    {copiedKey === 'accessToken' ? 'Copied' : 'Copy'}
+                    {copiedKey === 'accessToken' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                   </button>
                 </div>
                 <div className="text-slate-300 truncate select-all">{mockTokens.accessToken}</div>

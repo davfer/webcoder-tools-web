@@ -61,11 +61,11 @@ export const Base64Box: React.FC<Props> = ({
 
           <button
             onClick={() => handleCopy(analysis.decodedText)}
-            className="flex items-center gap-1 px-2.5 py-1 text-xs font-mono text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700 rounded transition-colors"
-            title="Copy Decoded Payload"
+            className="p-1.5 text-xs font-mono text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700 rounded transition-colors"
+            title={copied ? 'Copied decoded payload' : 'Copy Decoded Payload'}
+            aria-label="Copy Decoded Payload"
           >
             {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-            <span>Copy</span>
           </button>
 
           <button
@@ -122,12 +122,22 @@ export const Base64Box: React.FC<Props> = ({
             {encodedResult && (
               <div className="p-2.5 bg-slate-900/60 border border-slate-800 rounded-lg flex items-center justify-between font-mono text-xs text-cyan-300">
                 <span className="truncate pr-2">{encodedResult}</span>
-                <button
-                  onClick={() => onUpdateInput(encodedResult)}
-                  className="px-2 py-1 bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 rounded border border-cyan-500/30 whitespace-nowrap"
-                >
-                  Load in Textarea
-                </button>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    onClick={() => handleCopy(encodedResult)}
+                    className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded transition-colors"
+                    title={copied ? 'Copied encoded base64' : 'Copy encoded base64'}
+                    aria-label="Copy encoded base64"
+                  >
+                    {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  </button>
+                  <button
+                    onClick={() => onUpdateInput(encodedResult)}
+                    className="px-2 py-1 bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 rounded border border-cyan-500/30 whitespace-nowrap"
+                  >
+                    Load in Textarea
+                  </button>
+                </div>
               </div>
             )}
           </div>

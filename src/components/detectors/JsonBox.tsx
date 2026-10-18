@@ -57,10 +57,11 @@ export const JsonBox: React.FC<Props> = ({
           </button>
           <button
             onClick={() => handleCopy(analysis.formatted)}
-            className="flex items-center gap-1 px-2.5 py-1 text-xs font-mono text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700 rounded transition-colors"
+            className="p-1.5 text-xs font-mono text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700 rounded transition-colors"
+            title={copied ? 'Copied formatted JSON' : 'Copy Formatted JSON'}
+            aria-label="Copy Formatted JSON"
           >
             {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-            <span>Copy</span>
           </button>
           <button
             onClick={onToggleFocus}
@@ -94,7 +95,19 @@ export const JsonBox: React.FC<Props> = ({
         {/* Query Evaluation Result */}
         {queryResult && (
           <div className="p-3 bg-slate-900/80 border border-emerald-500/30 rounded-lg text-xs font-mono">
-            <span className="text-emerald-400 font-semibold">QUERY RESULT: </span>
+            <div className="flex items-center justify-between">
+              <span className="text-emerald-400 font-semibold">QUERY RESULT: </span>
+              {!queryResult.error && (
+                <button
+                  onClick={() => handleCopy(typeof queryResult.result === 'object' ? JSON.stringify(queryResult.result, null, 2) : String(queryResult.result))}
+                  className="p-1 text-slate-400 hover:text-white rounded hover:bg-slate-800 transition-colors"
+                  title="Copy Query Result"
+                  aria-label="Copy Query Result"
+                >
+                  {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                </button>
+              )}
+            </div>
             {queryResult.error ? (
               <span className="text-rose-400">{queryResult.error}</span>
             ) : (

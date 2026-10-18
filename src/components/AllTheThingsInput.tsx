@@ -56,11 +56,11 @@ export const AllTheThingsInput: React.FC<Props> = ({ value, onChange, onClear })
             <>
               <button
                 onClick={handleCopy}
-                className="flex items-center gap-1 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
-                title="Copy input text"
+                className="p-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+                title={copied ? 'Copied input text' : 'Copy input text'}
+                aria-label="Copy input text"
               >
                 {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copied ? 'Copied' : 'Copy'}</span>
               </button>
 
               <button
