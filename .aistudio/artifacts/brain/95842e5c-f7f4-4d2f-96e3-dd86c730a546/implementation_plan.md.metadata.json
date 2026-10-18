@@ -1,0 +1,6 @@
+{
+  "summary": "Implementation plan for WebCoder Tools (webcoder.tools) featuring the AllTheThings auto-detecting developer workbench, 11 deep analyzer cards, live URI diagnostics with network call tracking, local OAuth/OIDC testing playground, and PWA installability.",
+  "updatedAt": "2026-10-14T23:09:15.789126214Z",
+  "requestFeedback": true,
+  "userFacing": true
+}
