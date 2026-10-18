@@ -121,8 +121,16 @@ export const JsonBox: React.FC<Props> = ({
         )}
 
         {/* Formatted JSON view */}
-        <div className="relative">
-          <pre className="p-3 bg-[#0B0F17] rounded-lg border border-slate-800/90 text-xs font-mono text-emerald-300 overflow-x-auto max-h-64 whitespace-pre">
+        <div className="relative group">
+          <button
+            onClick={() => handleCopy(analysis.formatted)}
+            className="absolute top-2.5 right-2.5 p-1.5 bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white rounded transition-colors opacity-80 hover:opacity-100"
+            title={copied ? 'Copied formatted JSON' : 'Copy Formatted JSON'}
+            aria-label="Copy Formatted JSON"
+          >
+            {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+          </button>
+          <pre className="p-3 pr-10 bg-[#0B0F17] rounded-lg border border-slate-800/90 text-xs font-mono text-emerald-300 overflow-x-auto max-h-64 whitespace-pre">
             {analysis.formatted}
           </pre>
         </div>

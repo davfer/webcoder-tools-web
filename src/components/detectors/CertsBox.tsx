@@ -108,9 +108,21 @@ export const CertsBox: React.FC<Props> = ({
             <div className="text-slate-500">Valid Until</div>
             <div className="text-slate-200">{analysis.validTo || 'N/A'}</div>
           </div>
-          <div className="p-2.5 bg-[#0B0F17] rounded border border-slate-800">
-            <div className="text-slate-500">Key Spec</div>
-            <div className="text-slate-200">{analysis.keyType || 'RSA 2048'}</div>
+          <div className="p-2.5 bg-[#0B0F17] rounded border border-slate-800 flex items-center justify-between">
+            <div className="truncate mr-1">
+              <div className="text-slate-500">Key Spec</div>
+              <div className="text-slate-200 truncate">{analysis.keyType || 'RSA 2048'}</div>
+            </div>
+            {analysis.keyType && (
+              <button
+                onClick={() => handleCopy('keyspec', analysis.keyType)}
+                className="p-1 text-slate-400 hover:text-emerald-300 rounded hover:bg-slate-800/60 transition-colors shrink-0"
+                title={copiedKey === 'keyspec' ? 'Copied' : 'Copy Key Specification'}
+                aria-label="Copy Key Specification"
+              >
+                {copiedKey === 'keyspec' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+              </button>
+            )}
           </div>
           <div className="p-2.5 bg-[#0B0F17] rounded border border-slate-800 flex items-center justify-between">
             <div className="truncate mr-1">

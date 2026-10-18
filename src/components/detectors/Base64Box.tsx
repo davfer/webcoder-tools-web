@@ -17,15 +17,16 @@ export const Base64Box: React.FC<Props> = ({
   onToggleFocus,
   onUpdateInput,
 }) => {
-  const [copied, setCopied] = useState(false);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'text' | 'hex'>('text');
   const [encodeInput, setEncodeInput] = useState('');
   const [urlSafeEncode, setUrlSafeEncode] = useState(false);
 
-  const handleCopy = (text: string) => {
+  const handleCopy = (key: string, text: string) => {
+    if (!text) return;
     navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1800);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 1800);
   };
 
   const encodedResult = encodeInput ? encodeBase64(encodeInput, urlSafeEncode) : '';
@@ -60,12 +61,12 @@ export const Base64Box: React.FC<Props> = ({
           </div>
 
           <button
-            onClick={() => handleCopy(analysis.decodedText)}
+            onClick={() => handleCopy('header-decoded', viewMode === 'text' ? analysis.decodedText : analysis.hexDump)}
             className="p-1.5 text-xs font-mono text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700 rounded transition-colors"
-            title={copied ? 'Copied decoded payload' : 'Copy Decoded Payload'}
+            title={copiedKey === 'header-decoded' ? 'Copied' : 'Copy Decoded Payload'}
             aria-label="Copy Decoded Payload"
           >
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+            {copiedKey === 'header-decoded' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
           </button>
 
           <button
@@ -84,7 +85,17 @@ export const Base64Box: React.FC<Props> = ({
         <div>
           <div className="flex items-center justify-between text-xs text-slate-400 mb-1.5 font-mono">
             <span>DECODED OUTPUT:</span>
-            <span>{analysis.isPrintable ? 'UTF-8 Printable Text' : 'Binary Payload'}</span>
+            <div className="flex items-center gap-2">
+              <span>{analysis.isPrintable ? 'UTF-8 Printable Text' : 'Binary Payload'}</span>
+              <button
+                onClick={() => handleCopy('body-decoded', viewMode === 'text' ? analysis.decodedText : analysis.hexDump)}
+                className="p-1 text-slate-400 hover:text-cyan-300 rounded hover:bg-slate-800 transition-colors"
+                title={copiedKey === 'body-decoded' ? 'Copied' : `Copy ${viewMode === 'text' ? 'Decoded Text' : 'Hex Dump'}`}
+                aria-label={`Copy ${viewMode === 'text' ? 'Decoded Text' : 'Hex Dump'}`}
+              >
+                {copiedKey === 'body-decoded' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              </button>
+            </div>
           </div>
           {viewMode === 'text' ? (
             <pre className="p-3 bg-[#0B0F17] rounded-lg border border-slate-800/90 text-sm font-mono text-emerald-300 overflow-x-auto max-h-56 whitespace-pre-wrap select-all">
@@ -121,15 +132,15 @@ export const Base64Box: React.FC<Props> = ({
             />
             {encodedResult && (
               <div className="p-2.5 bg-slate-900/60 border border-slate-800 rounded-lg flex items-center justify-between font-mono text-xs text-cyan-300">
-                <span className="truncate pr-2">{encodedResult}</span>
+                <span className="truncate pr-2 select-all">{encodedResult}</span>
                 <div className="flex items-center gap-1.5 shrink-0">
                   <button
-                    onClick={() => handleCopy(encodedResult)}
+                    onClick={() => handleCopy('live-encoded', encodedResult)}
                     className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded transition-colors"
-                    title={copied ? 'Copied encoded base64' : 'Copy encoded base64'}
+                    title={copiedKey === 'live-encoded' ? 'Copied encoded base64' : 'Copy encoded base64'}
                     aria-label="Copy encoded base64"
                   >
-                    {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copiedKey === 'live-encoded' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                   </button>
                   <button
                     onClick={() => onUpdateInput(encodedResult)}

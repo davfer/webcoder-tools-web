@@ -40,7 +40,7 @@ export const UriBox: React.FC<Props> = ({
   onToggleFocus,
   onUpdateInput,
 }) => {
-  const [copied, setCopied] = useState(false);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [params, setParams] = useState<QueryParam[]>(analysis.queryParams);
   const [newKey, setNewKey] = useState('');
   const [newVal, setNewVal] = useState('');
@@ -57,10 +57,11 @@ export const UriBox: React.FC<Props> = ({
     setParams(analysis.queryParams);
   }, [analysis.queryString]);
 
-  const handleCopy = (text: string) => {
+  const handleCopy = (key: string, text: string) => {
+    if (!text) return;
     navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1800);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 1800);
   };
 
   const updateParam = (index: number, key: string, value: string) => {
@@ -153,12 +154,12 @@ export const UriBox: React.FC<Props> = ({
           </button>
 
           <button
-            onClick={() => handleCopy(analysis.raw)}
+            onClick={() => handleCopy('url', analysis.raw)}
             className="p-1.5 text-xs font-mono text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700 rounded transition-colors"
-            title={copied ? 'Copied URL' : 'Copy URL'}
+            title={copiedKey === 'url' ? 'Copied URL' : 'Copy URL'}
             aria-label="Copy URL"
           >
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+            {copiedKey === 'url' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
           </button>
 
           <button
@@ -224,12 +225,12 @@ export const UriBox: React.FC<Props> = ({
                       </td>
                       <td className="py-1.5 text-right whitespace-nowrap">
                         <button
-                          onClick={() => handleCopy(`${p.key}=${p.value}`)}
+                          onClick={() => handleCopy(`param-${idx}`, `${p.key}=${p.value}`)}
                           className="p-1 text-slate-400 hover:text-sky-300 rounded hover:bg-slate-800/60 transition-colors mr-1"
-                          title="Copy parameter"
+                          title={copiedKey === `param-${idx}` ? 'Copied parameter' : 'Copy parameter'}
                           aria-label="Copy parameter"
                         >
-                          <Copy className="w-3.5 h-3.5" />
+                          {copiedKey === `param-${idx}` ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                         </button>
                         <button
                           onClick={() => removeParam(idx)}
@@ -278,9 +279,21 @@ export const UriBox: React.FC<Props> = ({
         <div>
           <div className="text-xs font-mono text-slate-400 mb-2">DISSECTED URI COMPONENTS:</div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs font-mono">
-            <div className="p-2.5 bg-[#0B0F17] rounded border border-slate-800">
-              <div className="text-slate-500">Scheme</div>
-              <div className="text-sky-300 font-semibold">{analysis.protocol || 'none'}</div>
+            <div className="p-2.5 bg-[#0B0F17] rounded border border-slate-800 flex items-center justify-between">
+              <div className="truncate mr-1">
+                <div className="text-slate-500">Scheme</div>
+                <div className="text-sky-300 font-semibold truncate">{analysis.protocol || 'none'}</div>
+              </div>
+              {analysis.protocol && (
+                <button
+                  onClick={() => handleCopy('scheme', analysis.protocol)}
+                  className="p-1 text-slate-400 hover:text-sky-300 rounded hover:bg-slate-800 transition-colors shrink-0"
+                  title={copiedKey === 'scheme' ? 'Copied Scheme' : 'Copy Scheme'}
+                  aria-label="Copy Scheme"
+                >
+                  {copiedKey === 'scheme' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                </button>
+              )}
             </div>
             <div className="p-2.5 bg-[#0B0F17] rounded border border-slate-800 flex items-center justify-between">
               <div className="truncate mr-1">
@@ -288,12 +301,12 @@ export const UriBox: React.FC<Props> = ({
                 <div className="text-slate-200 font-semibold truncate">{analysis.host}:{analysis.port}</div>
               </div>
               <button
-                onClick={() => handleCopy(`${analysis.host}:${analysis.port}`)}
+                onClick={() => handleCopy('host', `${analysis.host}:${analysis.port}`)}
                 className="p-1 text-slate-400 hover:text-sky-300 rounded hover:bg-slate-800 transition-colors shrink-0"
-                title="Copy Host:Port"
+                title={copiedKey === 'host' ? 'Copied Host:Port' : 'Copy Host:Port'}
                 aria-label="Copy Host:Port"
               >
-                <Copy className="w-3.5 h-3.5" />
+                {copiedKey === 'host' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
               </button>
             </div>
             <div className="p-2.5 bg-[#0B0F17] rounded border border-slate-800 flex items-center justify-between">
@@ -302,17 +315,29 @@ export const UriBox: React.FC<Props> = ({
                 <div className="text-slate-200 font-semibold truncate">{analysis.pathname || '/'}</div>
               </div>
               <button
-                onClick={() => handleCopy(analysis.pathname || '/')}
+                onClick={() => handleCopy('path', analysis.pathname || '/')}
                 className="p-1 text-slate-400 hover:text-sky-300 rounded hover:bg-slate-800 transition-colors shrink-0"
-                title="Copy Pathname"
+                title={copiedKey === 'path' ? 'Copied Pathname' : 'Copy Pathname'}
                 aria-label="Copy Pathname"
               >
-                <Copy className="w-3.5 h-3.5" />
+                {copiedKey === 'path' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
               </button>
             </div>
-            <div className="p-2.5 bg-[#0B0F17] rounded border border-slate-800">
-              <div className="text-slate-500">Fragment (Hash)</div>
-              <div className="text-slate-200 font-semibold truncate">{analysis.hash || 'none'}</div>
+            <div className="p-2.5 bg-[#0B0F17] rounded border border-slate-800 flex items-center justify-between">
+              <div className="truncate mr-1">
+                <div className="text-slate-500">Fragment (Hash)</div>
+                <div className="text-slate-200 font-semibold truncate">{analysis.hash || 'none'}</div>
+              </div>
+              {analysis.hash && (
+                <button
+                  onClick={() => handleCopy('hash', analysis.hash)}
+                  className="p-1 text-slate-400 hover:text-sky-300 rounded hover:bg-slate-800 transition-colors shrink-0"
+                  title={copiedKey === 'hash' ? 'Copied Fragment' : 'Copy Fragment'}
+                  aria-label="Copy Fragment"
+                >
+                  {copiedKey === 'hash' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -388,17 +413,39 @@ export const UriBox: React.FC<Props> = ({
 
             {/* DNS & IP Resolution */}
             {dnsResult && (
-              <div className="p-3 bg-slate-900/60 rounded border border-slate-800 text-xs font-mono space-y-1.5">
+              <div className="p-3 bg-slate-900/60 rounded border border-slate-800 text-xs font-mono space-y-2">
                 <div className="flex items-center justify-between text-sky-400 font-semibold">
                   <span>DNS & REVERSE IP RESOLUTION (DoH)</span>
                   <span className="text-slate-500 text-[11px]">{dnsResult.provider}</span>
                 </div>
-                <div className="text-slate-300">
-                  IPv4 Addresses (A records): <span className="text-emerald-300">{dnsResult.ips.join(', ')}</span>
+                <div className="flex items-center justify-between text-slate-300">
+                  <div className="truncate mr-2">
+                    IPv4 Addresses (A records): <span className="text-emerald-300 select-all">{dnsResult.ips.join(', ')}</span>
+                  </div>
+                  {dnsResult.ips.length > 0 && (
+                    <button
+                      onClick={() => handleCopy('dns-ipv4', dnsResult.ips.join(', '))}
+                      className="p-1 text-slate-400 hover:text-emerald-300 rounded hover:bg-slate-800 transition-colors shrink-0"
+                      title={copiedKey === 'dns-ipv4' ? 'Copied IPv4' : 'Copy IPv4 Addresses'}
+                      aria-label="Copy IPv4 Addresses"
+                    >
+                      {copiedKey === 'dns-ipv4' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    </button>
+                  )}
                 </div>
                 {dnsResult.ipv6s.length > 0 && (
-                  <div className="text-slate-300">
-                    IPv6 Addresses (AAAA records): <span className="text-cyan-300">{dnsResult.ipv6s.join(', ')}</span>
+                  <div className="flex items-center justify-between text-slate-300">
+                    <div className="truncate mr-2">
+                      IPv6 Addresses (AAAA records): <span className="text-cyan-300 select-all">{dnsResult.ipv6s.join(', ')}</span>
+                    </div>
+                    <button
+                      onClick={() => handleCopy('dns-ipv6', dnsResult.ipv6s.join(', '))}
+                      className="p-1 text-slate-400 hover:text-cyan-300 rounded hover:bg-slate-800 transition-colors shrink-0"
+                      title={copiedKey === 'dns-ipv6' ? 'Copied IPv6' : 'Copy IPv6 Addresses'}
+                      aria-label="Copy IPv6 Addresses"
+                    >
+                      {copiedKey === 'dns-ipv6' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    </button>
                   </div>
                 )}
               </div>
@@ -414,14 +461,22 @@ export const UriBox: React.FC<Props> = ({
                       key={hop.hop}
                       className="flex items-center justify-between p-1.5 bg-[#0B0F17] rounded border border-slate-800/80"
                     >
-                      <div className="flex items-center gap-2">
-                        <span className="w-5 text-slate-500 font-bold">{hop.hop}.</span>
-                        <span className="text-slate-200 font-semibold">{hop.ip}</span>
-                        <span className="text-slate-500">({hop.hostname})</span>
+                      <div className="flex items-center gap-2 truncate mr-2">
+                        <span className="w-5 text-slate-500 font-bold shrink-0">{hop.hop}.</span>
+                        <span className="text-slate-200 font-semibold select-all truncate">{hop.ip}</span>
+                        <span className="text-slate-500 truncate">({hop.hostname})</span>
                       </div>
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2 shrink-0">
                         <span className="text-slate-400 text-[11px]">{hop.asNumber}</span>
                         <span className="text-emerald-400 font-semibold">{hop.rttMs} ms</span>
+                        <button
+                          onClick={() => handleCopy(`hop-${hop.hop}`, hop.ip)}
+                          className="p-1 text-slate-400 hover:text-amber-300 rounded hover:bg-slate-800 transition-colors ml-1"
+                          title={copiedKey === `hop-${hop.hop}` ? 'Copied' : `Copy Hop ${hop.hop} IP`}
+                          aria-label={`Copy Hop ${hop.hop} IP`}
+                        >
+                          {copiedKey === `hop-${hop.hop}` ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                        </button>
                       </div>
                     </div>
                   ))}

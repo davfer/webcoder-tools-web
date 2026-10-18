@@ -1,6 +1,6 @@
 {
-  "summary": "Architecture implementation plan for the extensible detector registry machine (T -> []Boxes) with match scoring, specificity ranking, and dynamic prioritized box rendering.",
-  "updatedAt": "2026-10-18T17:31:42.196442976Z",
+  "summary": "Comprehensive implementation plan for dynamic versioning with semantic-release and GitHub Actions CI, plus complete copy button coverage with icon-only presentation across all detector boxes.",
+  "updatedAt": "2026-10-18T17:59:44.946715031Z",
   "requestFeedback": true,
   "userFacing": true
 }

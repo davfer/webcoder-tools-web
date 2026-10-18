@@ -40,7 +40,7 @@ export const JwksBox: React.FC<Props> = ({
   onToggleFocus,
 }) => {
   const [loading, setLoading] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [result, setResult] = useState<JwksValidationResult | null>(null);
 
   // Configuration modes
@@ -95,10 +95,11 @@ export const JwksBox: React.FC<Props> = ({
     }
   }, [issuerClaim, jwtString]);
 
-  const handleCopy = (text: string) => {
+  const handleCopy = (key: string, text: string) => {
+    if (!text) return;
     navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1800);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 1800);
   };
 
   return (
@@ -121,12 +122,12 @@ export const JwksBox: React.FC<Props> = ({
         <div className="flex items-center gap-2">
           {(result?.jwksUri || issuerClaim) && (
             <button
-              onClick={() => handleCopy(result?.jwksUri || issuerClaim || '')}
+              onClick={() => handleCopy('header', result?.jwksUri || issuerClaim || '')}
               className="p-1.5 rounded bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
-              title={copied ? 'Copied' : 'Copy JWKS URI / Issuer'}
+              title={copiedKey === 'header' ? 'Copied' : 'Copy JWKS URI / Issuer'}
               aria-label="Copy JWKS URI / Issuer"
             >
-              {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              {copiedKey === 'header' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
             </button>
           )}
 
@@ -202,12 +203,12 @@ export const JwksBox: React.FC<Props> = ({
               <span className="select-all truncate mr-2">{issuerClaim || '[No "iss" claim found in token. Please use Custom JWKS URL or JSON]'}</span>
               {issuerClaim && (
                 <button
-                  onClick={() => handleCopy(issuerClaim)}
+                  onClick={() => handleCopy('iss', issuerClaim)}
                   className="p-1 text-slate-400 hover:text-white rounded hover:bg-slate-800 transition-colors shrink-0"
-                  title="Copy Issuer URL"
+                  title={copiedKey === 'iss' ? 'Copied' : 'Copy Issuer URL'}
                   aria-label="Copy Issuer URL"
                 >
-                  {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedKey === 'iss' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 </button>
               )}
             </div>
@@ -310,25 +311,70 @@ export const JwksBox: React.FC<Props> = ({
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                  <div className="p-2 bg-slate-900/80 rounded border border-slate-800">
-                    <div className="text-slate-500 text-[11px]">Matched kid (Key ID)</div>
-                    <div className="font-bold text-purple-300 truncate" title={result.matchedKid}>
-                      {result.matchedKid}
+                  <div className="p-2 bg-slate-900/80 rounded border border-slate-800 flex items-center justify-between">
+                    <div className="truncate mr-1">
+                      <div className="text-slate-500 text-[11px]">Matched kid (Key ID)</div>
+                      <div className="font-bold text-purple-300 truncate" title={result.matchedKid}>
+                        {result.matchedKid}
+                      </div>
                     </div>
+                    {result.matchedKid && (
+                      <button
+                        onClick={() => handleCopy('kid', result.matchedKid || '')}
+                        className="p-1 text-slate-400 hover:text-purple-300 rounded hover:bg-slate-800 transition-colors shrink-0"
+                        title={copiedKey === 'kid' ? 'Copied Key ID' : 'Copy Key ID'}
+                        aria-label="Copy Key ID"
+                      >
+                        {copiedKey === 'kid' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                      </button>
+                    )}
                   </div>
-                  <div className="p-2 bg-slate-900/80 rounded border border-slate-800">
-                    <div className="text-slate-500 text-[11px]">Key Type (kty)</div>
-                    <div className="font-bold text-slate-200">{result.matchedKeyType || 'RSA'}</div>
-                  </div>
-                  <div className="p-2 bg-slate-900/80 rounded border border-slate-800">
-                    <div className="text-slate-500 text-[11px]">Algorithm (alg)</div>
-                    <div className="font-bold text-slate-200">{result.matchedAlg || 'RS256'}</div>
-                  </div>
-                  <div className="p-2 bg-slate-900/80 rounded border border-slate-800">
-                    <div className="text-slate-500 text-[11px]">Intended Use (use)</div>
-                    <div className="font-bold text-slate-200">
-                      {result.matchedKeyUse === 'sig' ? 'sig (Signature)' : result.matchedKeyUse || 'sig'}
+
+                  <div className="p-2 bg-slate-900/80 rounded border border-slate-800 flex items-center justify-between">
+                    <div className="truncate mr-1">
+                      <div className="text-slate-500 text-[11px]">Key Type (kty)</div>
+                      <div className="font-bold text-slate-200 truncate">{result.matchedKeyType || 'RSA'}</div>
                     </div>
+                    <button
+                      onClick={() => handleCopy('kty', result.matchedKeyType || 'RSA')}
+                      className="p-1 text-slate-400 hover:text-purple-300 rounded hover:bg-slate-800 transition-colors shrink-0"
+                      title={copiedKey === 'kty' ? 'Copied' : 'Copy Key Type'}
+                      aria-label="Copy Key Type"
+                    >
+                      {copiedKey === 'kty' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                    </button>
+                  </div>
+
+                  <div className="p-2 bg-slate-900/80 rounded border border-slate-800 flex items-center justify-between">
+                    <div className="truncate mr-1">
+                      <div className="text-slate-500 text-[11px]">Algorithm (alg)</div>
+                      <div className="font-bold text-slate-200 truncate">{result.matchedAlg || 'RS256'}</div>
+                    </div>
+                    <button
+                      onClick={() => handleCopy('alg', result.matchedAlg || 'RS256')}
+                      className="p-1 text-slate-400 hover:text-purple-300 rounded hover:bg-slate-800 transition-colors shrink-0"
+                      title={copiedKey === 'alg' ? 'Copied' : 'Copy Algorithm'}
+                      aria-label="Copy Algorithm"
+                    >
+                      {copiedKey === 'alg' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                    </button>
+                  </div>
+
+                  <div className="p-2 bg-slate-900/80 rounded border border-slate-800 flex items-center justify-between">
+                    <div className="truncate mr-1">
+                      <div className="text-slate-500 text-[11px]">Intended Use (use)</div>
+                      <div className="font-bold text-slate-200 truncate">
+                        {result.matchedKeyUse === 'sig' ? 'sig (Signature)' : result.matchedKeyUse || 'sig'}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleCopy('use', result.matchedKeyUse || 'sig')}
+                      className="p-1 text-slate-400 hover:text-purple-300 rounded hover:bg-slate-800 transition-colors shrink-0"
+                      title={copiedKey === 'use' ? 'Copied' : 'Copy Key Use'}
+                      aria-label="Copy Key Use"
+                    >
+                      {copiedKey === 'use' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                    </button>
                   </div>
                 </div>
 
@@ -336,15 +382,15 @@ export const JwksBox: React.FC<Props> = ({
                   <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1">
                     <div className="truncate mr-2">
                       <span>JWKS URI: </span>
-                      <span className="text-slate-400">{result.jwksUri}</span>
+                      <span className="text-slate-400 select-all">{result.jwksUri}</span>
                     </div>
                     <button
-                      onClick={() => handleCopy(result.jwksUri || '')}
+                      onClick={() => handleCopy('uri', result.jwksUri || '')}
                       className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white shrink-0 transition-colors"
-                      title={copied ? 'Copied JWKS URI' : 'Copy JWKS URI'}
+                      title={copiedKey === 'uri' ? 'Copied JWKS URI' : 'Copy JWKS URI'}
                       aria-label="Copy JWKS URI"
                     >
-                      {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                      {copiedKey === 'uri' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                     </button>
                   </div>
                 )}

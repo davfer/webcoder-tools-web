@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Activity, Github, Settings, Star } from 'lucide-react';
+import { Activity, Github, Settings, Star, Tag } from 'lucide-react';
 
 interface Props {
   networkCallCount: number;
@@ -13,9 +13,16 @@ export const Footer: React.FC<Props> = ({
   onOpenSettings,
 }) => {
   const [stars, setStars] = useState<number | null>(null);
+  const [version, setVersion] = useState<string>('v1.0.0');
+  const [releaseUrl, setReleaseUrl] = useState<string>(
+    'https://github.com/davfer/webcoder-tools-web/releases'
+  );
+  const [isLiveRelease, setIsLiveRelease] = useState<boolean>(false);
 
   useEffect(() => {
     let isMounted = true;
+
+    // Fetch repository stars
     fetch('https://api.github.com/repos/davfer/webcoder-tools-web')
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
@@ -26,6 +33,23 @@ export const Footer: React.FC<Props> = ({
       .catch(() => {
         // Silent catch for offline or network isolation
       });
+
+    // Dynamically fetch latest GitHub release
+    fetch('https://api.github.com/repos/davfer/webcoder-tools-web/releases/latest')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (isMounted && data && data.tag_name) {
+          setVersion(data.tag_name);
+          if (data.html_url) {
+            setReleaseUrl(data.html_url);
+          }
+          setIsLiveRelease(true);
+        }
+      })
+      .catch(() => {
+        // Fallback to local package version
+      });
+
     return () => {
       isMounted = false;
     };
@@ -33,9 +57,24 @@ export const Footer: React.FC<Props> = ({
 
   return (
     <footer className="sticky bottom-0 z-30 flex items-center justify-between px-6 py-2.5 bg-[#0B0F17]/95 backdrop-blur-md border-t border-slate-800/80 font-mono text-xs text-slate-400">
-      {/* Left: Version (Title removed as requested) */}
+      {/* Left: Dynamic Version Release Badge */}
       <div className="flex items-center gap-2">
-        <span className="text-slate-500 font-mono text-[11px]">v1.0.0-pwa</span>
+        <a
+          href={releaseUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-900/90 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-sky-300 transition-colors shadow-xs group"
+          title={
+            isLiveRelease
+              ? `Release ${version} (Click to view release changelog on GitHub)`
+              : `Version ${version} (Click to view GitHub releases)`
+          }
+        >
+          <Tag className="w-3 h-3 text-slate-500 group-hover:text-sky-400 transition-colors" />
+          <span className="font-mono text-[11px] font-medium tracking-tight text-slate-300 group-hover:text-sky-300">
+            {version}
+          </span>
+        </a>
       </div>
 
       {/* Right: Network Calls Counter, GitHub Star Badge, Settings */}
