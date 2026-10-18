@@ -260,3 +260,47 @@ describe('JWKS Engine & Cryptographic Signature Verification', () => {
     assert.ok(resTampered.message?.includes('Signature mismatch'));
   });
 });
+
+describe('Detector Registry Machine (T -> []Boxes)', () => {
+  test('returns empty array when input is blank', async () => {
+    const { defaultDetectorRegistry } = await import('../src/services/detectorRegistry.tsx');
+    const boxes = defaultDetectorRegistry.evaluate('');
+    assert.equal(boxes.length, 0);
+
+    const whitespaceBoxes = defaultDetectorRegistry.evaluate('   \n  ');
+    assert.equal(whitespaceBoxes.length, 0);
+  });
+
+  test('prioritizes IP box on top and hashes at bottom for IP input', async () => {
+    const { defaultDetectorRegistry } = await import('../src/services/detectorRegistry.tsx');
+    const input = '192.168.1.1';
+    const boxes = defaultDetectorRegistry.evaluate(input);
+
+    assert.ok(boxes.length >= 2, 'Should match multiple tools including IP and Hash');
+    // Top box must be IP
+    assert.equal(boxes[0].id, 'ip', 'First box must be IP');
+    assert.equal(boxes[0].score, 100);
+
+    // Hash detector should be present but sorted near the bottom
+    const ipIndex = boxes.findIndex((b) => b.id === 'ip');
+    const hashIndex = boxes.findIndex((b) => b.id === 'hash');
+    assert.ok(ipIndex < hashIndex, 'IP box must precede generic Hash box');
+    assert.ok(boxes[ipIndex].effectiveRank > boxes[hashIndex].effectiveRank, 'IP effective rank must beat Hash');
+  });
+
+  test('prioritizes JWT and JWKS boxes over generic transform boxes', async () => {
+    const { defaultDetectorRegistry } = await import('../src/services/detectorRegistry.tsx');
+    const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT', kid: 'key-1' })).replace(/=/g, '');
+    const payload = btoa(JSON.stringify({ sub: '123', iss: 'https://example.com' })).replace(/=/g, '');
+    const testJwt = `${header}.${payload}.fake_signature`;
+
+    const boxes = defaultDetectorRegistry.evaluate(testJwt);
+    assert.ok(boxes.length >= 2);
+    assert.equal(boxes[0].id, 'jwt', 'Top box for JWT token must be JWT');
+
+    const jwtIndex = boxes.findIndex((b) => b.id === 'jwt');
+    const hashIndex = boxes.findIndex((b) => b.id === 'hash');
+    assert.ok(jwtIndex < hashIndex, 'JWT box must precede Hash box');
+  });
+});
+

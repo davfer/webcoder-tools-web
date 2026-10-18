@@ -1,6 +1,6 @@
 {
-  "summary": "Implementation plan for dedicated JWKS Public Key Discovery and Cryptographic Signature Verification box in WebCoder Tools.",
-  "updatedAt": "2026-10-18T12:16:47.144240175Z",
+  "summary": "Architecture implementation plan for the extensible detector registry machine (T -> []Boxes) with match scoring, specificity ranking, and dynamic prioritized box rendering.",
+  "updatedAt": "2026-10-18T17:31:42.196442976Z",
   "requestFeedback": true,
   "userFacing": true
 }

@@ -13,9 +13,6 @@ export const Header: React.FC = () => {
         <span className="text-base font-bold tracking-tight text-white whitespace-nowrap">
           WebCoder Tools
         </span>
-        <span className="hidden sm:inline-block text-[11px] font-mono text-slate-500">
-          webcoder.tools
-        </span>
       </div>
 
       {/* Right Action Zone */}

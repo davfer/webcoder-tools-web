@@ -1,107 +1,66 @@
-# JWKS Auto-Discovery & Cryptographic Signature Validator
+# Implementation Plan: Extensible Detector Registry Architecture (`T -> []Boxes`)
 
-A dedicated, specialized cryptographic verification box for JSON Web Key Sets (JWKS, RFC 7517) that automatically extracts the `iss` (Issuer) from detected JWTs, queries OpenID Connect discovery endpoints (`/.well-known/openid-configuration`), locates the `jwks_uri`, matches the `kid` (Key ID), and performs real in-browser signature verification using the Web Cryptography API (`crypto.subtle`).
+Refactor the detector system into a dedicated, modular detector registry machine that implements a clean `T -> []Boxes` pipeline. Registered detectors evaluate the input string `T`, produce a normalized match confidence score (0-100) and specificity rank, and emit a sorted list of matched boxes `[]Boxes` where specialized detectors (like IP, JWT, X.509, K8s, JSON, URI) appear at the top and generic fallback tools (like Hash/CRC) remain visible at the bottom.
 
-### User Review & Critical Decisions
+## User Review Required
 
 > [!IMPORTANT]
-> The following decisions were confirmed by the user:
-> - **Dedicated Box Placement**: Rendered as an independent, focused tool box positioned directly below the JWT Inspector card whenever a JWT is detected (or when standalone JWKS JSON / URL is supplied).
-> - **CORS Resilience & Fallback**: Executes client-side direct fetch against the `iss` discovery URL and `jwks_uri`, with graceful fallback allowing developers to input/paste a custom RFC 7517 compliant JWKS JSON or custom endpoint URL.
-> - **Cryptographic Verification Algorithms**: Real cryptographic signature verification using the Web Cryptography API supporting **RSA** (`RS256`, `RS384`, `RS512`) via RSASSA-PKCS1-v1_5 and **ECDSA** (`ES256`, `ES384`) with P-256 / P-384 curves, identifying key type (`kty`), key usage (`use`), and exact matching `kid`.
+> **Priority and Tie-Breaking Strategy**
+> Each detector will have:
+> 1. `matchScore`: 0–100 calculated confidence for the specific input.
+> 2. `specificity`: Categorical priority tier (`HIGH` = 100 for domain-specific payloads like IP, JWT, X.509, K8s; `MEDIUM` = 50 for formatted representations like JSON, URI, HexDec, Base64; `GENERIC` = 10 for universal hashing/CRC tools).
+> 3. Sorting function: Primary sort by combined effective score `(matchScore * 1000 + specificity)`, ensuring IP address matches always beat generic hash/CRC boxes while keeping hash/CRC visible at the bottom.
 
----
+## Proposed Changes
 
-### 1. Overview & Core Concept
+### 1. Detector Registry Core Engine (`src/services/detectorRegistry.ts`)
+Create a dedicated registry module defining the type contracts, detector registration, and execution pipeline:
+- **`DetectorContext<T>`**: Contains raw input, trimmed input, and any shared utilities.
+- **`DetectorResult<TData>`**: Contains `matched: boolean`, `score: number` (0–100), `specificity: SpecificityTier`, `data: TData`, and metadata.
+- **`RegisteredDetector<T, TResult>`**:
+  - `id`: Unique identifier (`ip`, `jwt`, `jwks`, `json`, `k8s`, `certs`, `uri`, `hexdec`, `base64`, `hash`, `oidc`).
+  - `name`: Display label.
+  - `specificity`: Domain priority tier (`HIGH | MEDIUM | GENERIC`).
+  - `detect(input: T): Promise<DetectorResult<TResult>> | DetectorResult<TResult>`.
+  - `renderBox(props: BoxRenderProps<TResult>): ReactNode`.
+- **`DetectorRegistry<T>`**:
+  - `register(detector: RegisteredDetector<T, any>)`: Register new detectors dynamically.
+  - `evaluate(input: T): Promise<DetectedBoxInstance[]> | DetectedBoxInstance[]`: Executes registered detectors, filters matches (score > 0), sorts by composite priority `(score, specificity)`, and returns the ordered `[]Boxes`.
 
-When a user pastes a JWT into the AllTheThings input:
-1. **Issuer Detection**: The JWT analyzer extracts the `iss` claim (e.g. `https://accounts.google.com`, `https://dev-xyz.us.auth0.com`, or any OIDC provider).
-2. **OpenID Configuration Lookup**: Constructs the standard discovery URL: `${iss}/.well-known/openid-configuration` (RFC 8414 / OIDC Core 1.0).
-3. **JWKS URI Extraction**: Fetches the discovery JSON, retrieves `jwks_uri` (e.g. `https://www.googleapis.com/oauth2/v3/certs`), and loads the public keys array (`keys: [...]`). Every external fetch increments the **Network Calls Counter** and logs to the network drawer.
-4. **Key Matching & Inspection**: Compares the token's header `kid` with the keys in the JWKS. Displays:
-   - Matched `kid` (Key ID)
-   - Key Type (`kty`: `RSA` or `EC`)
-   - Algorithm (`alg`: `RS256`, `ES256`, etc.)
-   - Intended Use (`use`: `sig`)
-   - Public Key Modulus / Coordinates (`n`, `e`, `x`, `y`)
-5. **Real Cryptographic Verification**: Converts the matching JWK into a `CryptoKey` via `crypto.subtle.importKey('jwk', ...)` and verifies the token's signature against `${header}.${payload}` using `crypto.subtle.verify(...)`.
-6. **Custom RFC 7517 JWKS URL / JSON Input**: Developers can override the discovery process by providing any custom RFC 7517 compliant JWKS URL or directly pasting a raw JWKS JSON object.
+### 2. Standardized Detector Adapters (`src/services/detectors/*` or modular registry bindings)
+Wrap existing analytical engines into the standardized detector interface:
+- **IP Detector**: Checks for IPv4 / IPv6 / CIDR. When valid IP, returns `score = 100`, `specificity = HIGH (100)`.
+- **JWT Detector**: Checks 3-part Base64URL pattern with valid headers. Score = 100, `specificity = HIGH (100)`.
+- **JWKS Detector**: Triggered when JWT has `iss` or input contains JWKS structure. Score = 95, `specificity = HIGH (100)`.
+- **Certificates Detector (X.509)**: Detects PEM certificate boundaries or ASN.1 DER. Score = 100, `specificity = HIGH (100)`.
+- **Kubernetes Detector**: Detects apiVersion, kind, secret manifest structure. Score = 95, `specificity = HIGH (100)`.
+- **JSON Detector**: Validates parseable JSON structures (arrays/objects). Score = 90, `specificity = MEDIUM (60)`.
+- **URI Detector**: Detects URLs, query strings, protocols. Score = 85, `specificity = MEDIUM (50)`.
+- **Hex/Dec/Binary Detector**: Detects numeric bases. Score = 70, `specificity = MEDIUM (40)`.
+- **Base64 Detector**: Detects valid Base64 / Base32 strings. Score = 70, `specificity = MEDIUM (40)`.
+- **Hash / CRC Detector**: Generic catch-all tool. Scores 25 with `specificity = GENERIC (10)`, ensuring it stays visible when input is present, but strictly sorted after high-confidence domain tools like IP or JWT.
 
----
+### 3. Refactor `src/App.tsx` to Consume `T -> []Boxes`
+- Replace hardcoded static JSX box layout with dynamic rendering of `detectedBoxes.map(box => box.render(...))` while preserving:
+  - Manual category filtering (`activeCategory`).
+  - Tool focus mode (`focusedTool`).
+  - User toggle preferences (`enabledDetectors`).
+  - Zero-input state (empty screen on first visit, clean textarea with placeholder).
+- Retain two-way updates between boxes and parent input stream (`onUpdateInput={setInput}`).
 
-### 2. User Experience & Visual Design
+## Verification Plan
 
-#### Key User Flows
-- **Automatic Discovery Flow**:
-  - Developer pastes a JWT with an `iss` (e.g. Google, Auth0, Okta, Keycloak).
-  - The JWT box renders on top; immediately below it, the **JWKS Validator** box appears.
-  - An "Auto-Discover & Verify" button shows the resolved discovery URL. Clicking it queries the OIDC configuration, retrieves keys, and verifies the signature in real time.
-- **Verification Status Indicators**:
-  - `Signature Verified`: High-contrast emerald badge (`✓ Valid signature verified against kid: "..." (RSA 2048-bit)`).
-  - `Key Matched, Invalid Signature`: Rose badge (`✗ Signature does not match public key in JWKS`).
-  - `No Matching Key ID`: Amber badge (`⚠ Token kid: "..." not found in the 3 keys returned by provider`).
-- **Custom JWKS Mode**:
-  - A toggle to switch between `OIDC Auto-Discovery (iss claim)` and `Custom JWKS URL / Raw JSON (RFC 7517)`.
-  - Input field with RFC 7517 format compliance helper.
+### Automated Verification
+- Run `npm run lint` and `compile_applet` to ensure TypeScript typings, React hook dependencies, and registry contracts build with zero errors.
 
-#### Visual Styling
-- Adheres to the Dark Engineering Terminal theme (`#111827` surface, `#1E293B` borders, `#0B0F17` inputs).
-- Accented with bright violet and emerald status indicators for cryptographic key attributes.
-
----
-
-### 3. Key Product Decisions & Trade-Offs
-
-#### Decision 1: Pure Client-Side `crypto.subtle` vs External Verification
-- **Chosen Approach**: Imports the JWK (`kty: RSA` or `EC`) directly into the browser's native Web Cryptography API (`crypto.subtle.importKey('jwk', ...)`).
-- **Why**: Zero latency, total confidentiality (the token and keys never leave the browser sandbox), and full offline capability when JWKS JSON is pasted locally.
-
-#### Decision 2: CORS Transparency & Gated Network Tracking
-- **Chosen Approach**: All external network calls (fetching `.well-known/openid-configuration` and `jwks_uri`) are routed through `networkTracker`, displaying response time, HTTP status, and error details in the bottom status bar and network drawer. If browser CORS blocks the fetch, the UI displays a clear explanation and immediately opens the manual JWKS JSON paste input.
-
----
-
-### 4. Technical Architecture & Data Strategy
-
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│                        JWT Detected in Input                           │
-│   (Header: alg="RS256", kid="key-123" | Payload: iss="https://...")   │
-└───────────────────────────────────┬────────────────────────────────────┘
-                                    │
-                                    ▼
-┌────────────────────────────────────────────────────────────────────────┐
-│              Dedicated JWKS Box (Auto-Discovery Engine)                │
-│                                                                        │
-│  [ Step 1: Query /.well-known/openid-configuration ]                   │
-│         │                                                              │
-│         ▼                                                              │
-│  [ Step 2: Retrieve jwks_uri ] ─── (Increments Network Counter)        │
-│         │                                                              │
-│         ▼                                                              │
-│  [ Step 3: Parse RFC 7517 JWKS Keys (keys: [ { kid, kty, alg, ... } ])]│
-│         │                                                              │
-│         ▼                                                              │
-│  [ Step 4: Find Matching Key ID ("key-123") ]                          │
-│         │                                                              │
-│         ├── Found ──> [ Step 5: crypto.subtle.importKey('jwk') ]       │
-│         │                    │                                         │
-│         │                    ▼                                         │
-│         │             [ Step 6: crypto.subtle.verify(...) ]            │
-│         │                    │                                         │
-│         │                    ├── Valid ──> [ ✓ Signature Valid ]       │
-│         │                    └── Invalid ─> [ ✗ Signature Mismatch ]   │
-│         │                                                              │
-│         └── Not Found ──> [ ⚠ kid not present in provider JWKS ]       │
-└────────────────────────────────────────────────────────────────────────┘
-```
-
-#### New Modules:
-- `src/utils/jwksEngine.ts`:
-  - `discoverJwksUri(issuer: string)`: fetches `.well-known/openid-configuration`
-  - `fetchJwks(jwksUri: string)`: retrieves and parses RFC 7517 keys
-  - `verifyJwtSignatureWithJwk(token: string, jwk: any)`: uses `crypto.subtle` for RSA and ECDSA signature verification
-  - `parseJwkKeyDetails(jwk: any)`: extracts algorithm, curve, bit-length, modulus/exponent, coordinates
-- `src/components/detectors/JwksBox.tsx`:
-  - Dedicated interactive box with discovery controls, matched kid inspector, public key viewer, and signature validation report
-- Integration in `src/App.tsx`, `src/types/index.ts`, and `tests/engines.test.ts`.
+### Manual Verification Scenarios
+1. **IP Test Input** (`192.168.1.1` or `10.0.0.1/24`):
+   - Verify that **IP Box** is rendered as the topmost box.
+   - Verify that generic **Hash / CRC Box** appears at the bottom.
+2. **JWT Test Input**:
+   - Verify **JWT Box** and **JWKS Box** appear on top; Hash/CRC box at bottom.
+3. **Empty Input**:
+   - Verify zero boxes are rendered, leaving the clean textarea without mock demos.
+4. **Filtering and Toggles**:
+   - Verify category selector tabs still filter properly.
+   - Verify expand/focus mode works on any detected box.
