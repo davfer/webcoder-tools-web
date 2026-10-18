@@ -2,6 +2,13 @@ import { PresetPayload } from '../types';
 
 export const SAMPLE_PRESETS: PresetPayload[] = [
   {
+    name: 'JWT with OIDC Discovery',
+    category: 'jwks',
+    description: 'OpenID Connect ID token with iss: https://accounts.google.com and kid',
+    content:
+      'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjY3ZTE4ZDM1OWU2ZmE2NjJhMDhkMzY2ODcwNzgxZWY0YzNmNjJhY2EifQ.eyJpc3MiOiJodHRwczovL2F1dGgud2ViY29kZXIudG9vbHMiLCJzdWIiOiIxMDk5NDgyODEwOTQ4OTI4MSIsImF1ZCI6IndlYmNvZGVyLXRlc3QtYXBwIiwiZXhwIjoxOTk5OTk5OTk5LCJpYXQiOjE3NjA0ODAwMDAsImVtYWlsIjoidXNlckBleGFtcGxlLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlfQ.TJVA95OrM7E2cBab30RMHrHDcEfxjoYZgeFONFh7HgQ',
+  },
+  {
     name: 'JWT Auth Token',
     category: 'jwt',
     description: 'RS256 Bearer Token with user scopes and timestamps',

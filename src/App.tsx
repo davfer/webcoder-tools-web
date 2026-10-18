@@ -30,6 +30,7 @@ import { IpBox } from './components/detectors/IpBox';
 import { CertsBox } from './components/detectors/CertsBox';
 import { K8sBox } from './components/detectors/K8sBox';
 import { OidcBox } from './components/detectors/OidcBox';
+import { JwksBox } from './components/detectors/JwksBox';
 
 import { ArrowLeft, Sparkles, Filter, CheckCircle2 } from 'lucide-react';
 
@@ -53,6 +54,7 @@ export default function App() {
     base64: true,
     json: true,
     jwt: true,
+    jwks: true,
     hash: true,
     uri: true,
     hexdec: true,
@@ -112,6 +114,7 @@ export default function App() {
     all: true,
     uri: uriResult.isUri,
     jwt: jwtResult.isJwt,
+    jwks: jwtResult.isJwt || activeCategory === 'jwks' || input.toLowerCase().includes('jwks'),
     json: jsonResult.isValidJson,
     hash: input.trim().length > 0,
     k8s: k8sResult.isK8s,
@@ -153,6 +156,7 @@ export default function App() {
   const visibleCount = [
     'uri',
     'jwt',
+    'jwks',
     'json',
     'hash',
     'k8s',
@@ -254,7 +258,7 @@ export default function App() {
               />
             )}
 
-            {/* JWT / JWKS */}
+            {/* JWT Inspector */}
             {isToolVisible('jwt') && (
               <JwtBox
                 analysis={jwtResult}
@@ -262,6 +266,18 @@ export default function App() {
                 isFocused={focusedTool === 'jwt'}
                 onToggleFocus={() => setFocusedTool(focusedTool === 'jwt' ? null : 'jwt')}
                 onUpdateInput={setInput}
+              />
+            )}
+
+            {/* JWKS Public Key & Signature Validator Box */}
+            {isToolVisible('jwks') && (
+              <JwksBox
+                jwtString={input}
+                issuerClaim={jwtResult.payload?.iss}
+                tokenKid={jwtResult.header?.kid}
+                tokenAlg={jwtResult.header?.alg}
+                isFocused={focusedTool === 'jwks'}
+                onToggleFocus={() => setFocusedTool(focusedTool === 'jwks' ? null : 'jwks')}
               />
             )}
 

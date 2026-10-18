@@ -1,67 +1,63 @@
-# WebCoder Tools (webcoder.tools) — AllTheThings Developer Workbench
+# JWKS Auto-Discovery & Cryptographic Signature Validator
 
-A high-density developer utility and security workbench engineered for instant offline computation, intelligent multi-format payload detection, and deep inspection of Web, Identity, Cloud, and Network primitives.
+A dedicated, specialized cryptographic verification box for JSON Web Key Sets (JWKS, RFC 7517) that automatically extracts the `iss` (Issuer) from detected JWTs, queries OpenID Connect discovery endpoints (`/.well-known/openid-configuration`), locates the `jwks_uri`, matches the `kid` (Key ID), and performs real in-browser signature verification using the Web Cryptography API (`crypto.subtle`).
 
 ### User Review & Critical Decisions
 
 > [!IMPORTANT]
-> The following architectural decisions were aligned during Phase 1:
-> - **Framework & Ecosystem**: Built with React 19, TypeScript, Vite, and Tailwind CSS for rapid client-side computation and zero-latency UI reactivity.
-> - **Live Network & URI Diagnostics**: Runs pure client-side inspection (browser fetch, Web Performance Timing APIs, and DNS-over-HTTPS via Cloudflare/Google public DoH) with an explicit **Network Calls Counter** and audit log tracking every outbound network attempt.
-> - **Visual Theme & Density**: Dark engineering terminal theme (`#0B0F17` dark slate canvas, `#111827` elevated surfaces, `#1E293B` hairline borders, and cyan/emerald monospace accents) with compact tabular alignment.
+> The following decisions were confirmed by the user:
+> - **Dedicated Box Placement**: Rendered as an independent, focused tool box positioned directly below the JWT Inspector card whenever a JWT is detected (or when standalone JWKS JSON / URL is supplied).
+> - **CORS Resilience & Fallback**: Executes client-side direct fetch against the `iss` discovery URL and `jwks_uri`, with graceful fallback allowing developers to input/paste a custom RFC 7517 compliant JWKS JSON or custom endpoint URL.
+> - **Cryptographic Verification Algorithms**: Real cryptographic signature verification using the Web Cryptography API supporting **RSA** (`RS256`, `RS384`, `RS512`) via RSASSA-PKCS1-v1_5 and **ECDSA** (`ES256`, `ES384`) with P-256 / P-384 curves, identifying key type (`kty`), key usage (`use`), and exact matching `kid`.
 
 ---
 
 ### 1. Overview & Core Concept
 
-**WebCoder Tools** is an all-in-one developer console centered around the **AllTheThings Mode**:
-1. **Universal Input**: A full-width, multi-line command/payload input textarea where developers paste arbitrary raw data (JWTs, Base64 strings, JSON, X.509 PEM certificates, Kubernetes YAML manifests, URLs, IP addresses, or password hashes).
-2. **Auto-Detection Engine**: Continuously parses the input across 11 specialized format engines without requiring manual mode switching.
-3. **Interactive Detection Boxes**: Each recognized format renders an interactive, actionable preview card below the textarea. Any card can be expanded into **Focus Mode** for comprehensive debugging, manipulation, and round-trip conversion.
-4. **Offline-First & PWA**: Fully functional offline with zero network leaks for sensitive keys/hashes. Outbound requests are opt-in, gated, and tracked on a visible Network Counter.
+When a user pastes a JWT into the AllTheThings input:
+1. **Issuer Detection**: The JWT analyzer extracts the `iss` claim (e.g. `https://accounts.google.com`, `https://dev-xyz.us.auth0.com`, or any OIDC provider).
+2. **OpenID Configuration Lookup**: Constructs the standard discovery URL: `${iss}/.well-known/openid-configuration` (RFC 8414 / OIDC Core 1.0).
+3. **JWKS URI Extraction**: Fetches the discovery JSON, retrieves `jwks_uri` (e.g. `https://www.googleapis.com/oauth2/v3/certs`), and loads the public keys array (`keys: [...]`). Every external fetch increments the **Network Calls Counter** and logs to the network drawer.
+4. **Key Matching & Inspection**: Compares the token's header `kid` with the keys in the JWKS. Displays:
+   - Matched `kid` (Key ID)
+   - Key Type (`kty`: `RSA` or `EC`)
+   - Algorithm (`alg`: `RS256`, `ES256`, etc.)
+   - Intended Use (`use`: `sig`)
+   - Public Key Modulus / Coordinates (`n`, `e`, `x`, `y`)
+5. **Real Cryptographic Verification**: Converts the matching JWK into a `CryptoKey` via `crypto.subtle.importKey('jwk', ...)` and verifies the token's signature against `${header}.${payload}` using `crypto.subtle.verify(...)`.
+6. **Custom RFC 7517 JWKS URL / JSON Input**: Developers can override the discovery process by providing any custom RFC 7517 compliant JWKS URL or directly pasting a raw JWKS JSON object.
 
 ---
 
 ### 2. User Experience & Visual Design
 
 #### Key User Flows
-- **Zero-State**: On initial load, developers see the top bar, left function sidebar with detector toggles, the primary AllTheThings textarea with quick-fill sample presets (JWT, K8s Secret, URL with query params, X.509 cert, JSON payload), and quick-start tips.
-- **Typing & Paste Detection**: As text is entered or pasted, active detectors trigger in real-time (<50ms debounced), highlighting matching formats and rendering structured inspector cards.
-- **Focus / Deep Dive Mode**: Clicking "Focus" on any card (e.g., *URI Mode* or *JWT/JWKS*) isolates that tool into a full-height specialized workspace with granular controls (e.g., query param editor, live HTTP/CORS/timings pinger, PKCE generator, K8s secret base64 decoder).
-- **Network Gating & Activity Drawer**: Outbound network requests (such as URI ping, TLS inspection, or DoH reverse lookup) explicitly warn the user and increment the persistent bottom status counter. Clicking the counter opens a slide-over audit log.
-- **PWA Installation**: Prominent install button in the top action zone supporting desktop Chrome/Edge install prompts and guided step-by-step iOS Safari home-screen instructions.
+- **Automatic Discovery Flow**:
+  - Developer pastes a JWT with an `iss` (e.g. Google, Auth0, Okta, Keycloak).
+  - The JWT box renders on top; immediately below it, the **JWKS Validator** box appears.
+  - An "Auto-Discover & Verify" button shows the resolved discovery URL. Clicking it queries the OIDC configuration, retrieves keys, and verifies the signature in real time.
+- **Verification Status Indicators**:
+  - `Signature Verified`: High-contrast emerald badge (`✓ Valid signature verified against kid: "..." (RSA 2048-bit)`).
+  - `Key Matched, Invalid Signature`: Rose badge (`✗ Signature does not match public key in JWKS`).
+  - `No Matching Key ID`: Amber badge (`⚠ Token kid: "..." not found in the 3 keys returned by provider`).
+- **Custom JWKS Mode**:
+  - A toggle to switch between `OIDC Auto-Discovery (iss claim)` and `Custom JWKS URL / Raw JSON (RFC 7517)`.
+  - Input field with RFC 7517 format compliance helper.
 
-#### Visual Identity & Theme
-- **Theme Canvas**: Dark engineering terminal (Neutral canvas `#0B0F17`, surfaces `#111827` and `#161F30`, borders `rgba(255,255,255,0.08)`).
-- **Typography**: Display & structural headers in `Plus Jakarta Sans` / `Inter`, telemetry & code in `JetBrains Mono` / `font-mono` with `tabular-nums`.
-- **Top Bar Contract**:
-  - *Zone 1 (Brand)*: `WebCoder Tools` wordmark in crisp sans bold with a subtle cyan terminal prompt glyph.
-  - *Zone 2 (Navigation / Modes)*: Clean text links for `AllTheThings`, `URI & Network`, `Identity & OIDC`, `Crypto & Hashes`, `K8s & Cloud`.
-  - *Zone 3 (Actions)*: In-app PWA Install button, Sample Presets selector, and Mock Dev Identity toggle (`Local Developer`).
-- **Footer Status Bar**:
-  - Live Network Calls Counter with clear indicator badge (`0 External Calls` / `N Active Calls`).
-  - App version (`v1.0.0-pwa`).
-  - GitHub repository link.
-  - Settings drawer trigger (auto-detect toggles, local storage purge, network permissions).
+#### Visual Styling
+- Adheres to the Dark Engineering Terminal theme (`#111827` surface, `#1E293B` borders, `#0B0F17` inputs).
+- Accented with bright violet and emerald status indicators for cryptographic key attributes.
 
 ---
 
 ### 3. Key Product Decisions & Trade-Offs
 
-#### Decision 1: Client-Side Computation vs. Server Delegation
-- **Chosen Approach**: All 11 format parsers (Base64, JSON, JWT/JWKS, Hashes/Passwords, CRC/MD5/SHA1, URI dissection, Hex/Dec/Bin, IP/CIDR, X.509 certs, K8s YAML/Secrets, OAuth PKCE/State) run 100% in-browser via native Web APIs (SubtleCrypto, TextEncoder, URL, BigInt).
-- **Why**: Zero latency, total data privacy (credentials and internal tokens never leave the developer's machine), and full offline capability as a PWA.
-- **Network Gating**: External calls (URI ping, CORS check, DoH) are triggered strictly by user action and increment the Network Calls Counter.
+#### Decision 1: Pure Client-Side `crypto.subtle` vs External Verification
+- **Chosen Approach**: Imports the JWK (`kty: RSA` or `EC`) directly into the browser's native Web Cryptography API (`crypto.subtle.importKey('jwk', ...)`).
+- **Why**: Zero latency, total confidentiality (the token and keys never leave the browser sandbox), and full offline capability when JWKS JSON is pasted locally.
 
-#### Decision 2: Detection Priority & Multi-Box Layout
-- **Chosen Approach**: Multi-match detection pipeline. An input can match multiple formats (e.g., a Base64 string that decodes to a valid JSON or JWT). The UI renders stacked interactive cards ordered by specificity, with URI query strings placed prominently at the top when URLs are detected.
-- **Why**: Eliminates manual mode switching and prevents false-negative dead ends.
-
-#### Decision 3: Deep Feature Scope
-- **JWT & OIDC**: Decodes Header/Payload/Signature, computes expiration status and relative countdowns, validates claims, provides PKCE code verifier/challenge S256 calculator and OAuth token response tester.
-- **URI Mode**: Dissects scheme, auth, host, port, path, and places the query parameters table on top with live key-value manipulation. Provides CORS check, browser timing breakdown, IP/DoH resolver, and visual traceroute hop simulation.
-- **Kubernetes Resources**: Formats YAML/JSON, highlights Kind and APIVersion, and automatically parses `data` fields in Secrets with 1-click base64 reveal.
-- **X.509 Certificates**: Parses PEM format, extracting Subject, Issuer, Validity window, Serial, and fingerprints.
+#### Decision 2: CORS Transparency & Gated Network Tracking
+- **Chosen Approach**: All external network calls (fetching `.well-known/openid-configuration` and `jwks_uri`) are routed through `networkTracker`, displaying response time, HTTP status, and error details in the bottom status bar and network drawer. If browser CORS blocks the fetch, the UI displays a clear explanation and immediately opens the manual JWKS JSON paste input.
 
 ---
 
@@ -69,41 +65,43 @@ A high-density developer utility and security workbench engineered for instant o
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│                        Top Navigation Bar                              │
-│   [WebCoder Tools] ── [AllTheThings | URI | OIDC | Hashes] ── [Install]│
+│                        JWT Detected in Input                           │
+│   (Header: alg="RS256", kid="key-123" | Payload: iss="https://...")   │
 └───────────────────────────────────┬────────────────────────────────────┘
                                     │
-┌───────────────────┬───────────────┴────────────────────────────────────┐
-│   Left Sidebar    │                 Primary Workspace                  │
-│                   │ ┌────────────────────────────────────────────────┐ │
-│ ┌───────────────┐ │ │            AllTheThings Textarea               │ │
-│ │ Mode Focus:   │ │ │ (Paste any token, JSON, URL, YAML, Hash, cert) │ │
-│ │ • AllTheThings│ │ └────────────────────────┬───────────────────────┘ │
-│ │ • URI Tools   │ │                          │                         │
-│ │ • OIDC Test   │ │                          ▼                         │
-│ │ • Crypto      │ │              Auto-Detection Pipeline               │
-│ │ • K8s / Cloud │ │  (Regex + Grammars + SubtleCrypto + Decoders)      │
-│ ├───────────────┤ │                          │                         │
-│ │ Active Checks:│ │       ┌──────────────────┴──────────────────┐      │
-│ │ [✓] Base64    │ │       ▼                                     ▼      │
-│ │ [✓] JSON      │ │ ┌───────────────────┐             ┌──────────────┐ │
-│ │ [✓] JWT/JWKS  │ │ │ URI Query & Ping  │             │ JWT / JWKS   │ │
-│ │ [✓] Hashes    │ │ ├───────────────────┤             ├──────────────┤ │
-│ │ [✓] IP/CIDR   │ │ │ Params table top  │             │ Claims, Exp, │ │
-│ │ [✓] X.509 Cert│ │ │ Timings, CORS     │             │ Algorithms   │ │
-│ │ [✓] K8s YAML  │ │ └───────────────────┘             └──────────────┘ │
-│ └───────────────┘ │       ┌──────────────────┬──────────────────┐      │
-│                   │       ▼                  ▼                  ▼      │
-│                   │ ┌───────────┐      ┌───────────┐      ┌──────────┐ │
-│                   │ │ K8s YAML  │      │ Base64/Hex│      │ Hash/MD5 │ │
-│                   │ └───────────┘      └───────────┘      └──────────┘ │
-└───────────────────┴────────────────────────────────────────────────────┘
-│ Footer: [v1.0.0] · [GitHub] · [🌐 Network Calls: 3 (Audit Log)] · [⚙ Settings] │
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│              Dedicated JWKS Box (Auto-Discovery Engine)                │
+│                                                                        │
+│  [ Step 1: Query /.well-known/openid-configuration ]                   │
+│         │                                                              │
+│         ▼                                                              │
+│  [ Step 2: Retrieve jwks_uri ] ─── (Increments Network Counter)        │
+│         │                                                              │
+│         ▼                                                              │
+│  [ Step 3: Parse RFC 7517 JWKS Keys (keys: [ { kid, kty, alg, ... } ])]│
+│         │                                                              │
+│         ▼                                                              │
+│  [ Step 4: Find Matching Key ID ("key-123") ]                          │
+│         │                                                              │
+│         ├── Found ──> [ Step 5: crypto.subtle.importKey('jwk') ]       │
+│         │                    │                                         │
+│         │                    ▼                                         │
+│         │             [ Step 6: crypto.subtle.verify(...) ]            │
+│         │                    │                                         │
+│         │                    ├── Valid ──> [ ✓ Signature Valid ]       │
+│         │                    └── Invalid ─> [ ✗ Signature Mismatch ]   │
+│         │                                                              │
+│         └── Not Found ──> [ ⚠ kid not present in provider JWKS ]       │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-#### State & Storage
-- `inputText`: String state synchronized with local persistence (`localStorage`) so developers don't lose work on reload.
-- `activeFilter`: String (`"all"` or isolated tool ID for single-concept focus).
-- `networkAuditLog`: Array of `{ id, timestamp, url, method, durationMs, status, error }` displayed in the Network Drawer.
-- `pwaInstallState`: Standardized `usePWAInstall` hook handling `beforeinstallprompt`, iOS guidance modal, and standalone mode detection.
+#### New Modules:
+- `src/utils/jwksEngine.ts`:
+  - `discoverJwksUri(issuer: string)`: fetches `.well-known/openid-configuration`
+  - `fetchJwks(jwksUri: string)`: retrieves and parses RFC 7517 keys
+  - `verifyJwtSignatureWithJwk(token: string, jwk: any)`: uses `crypto.subtle` for RSA and ECDSA signature verification
+  - `parseJwkKeyDetails(jwk: any)`: extracts algorithm, curve, bit-length, modulus/exponent, coordinates
+- `src/components/detectors/JwksBox.tsx`:
+  - Dedicated interactive box with discovery controls, matched kid inspector, public key viewer, and signature validation report
+- Integration in `src/App.tsx`, `src/types/index.ts`, and `tests/engines.test.ts`.

@@ -32,7 +32,8 @@ export const Sidebar: React.FC<Props> = ({
 }) => {
   const tools: { id: ToolCategory; label: string; icon: React.FC<any>; color: string }[] = [
     { id: 'uri', label: 'URI & Network', icon: Globe, color: 'text-sky-400' },
-    { id: 'jwt', label: 'JWT / JWKS', icon: KeyRound, color: 'text-violet-400' },
+    { id: 'jwt', label: 'JWT Inspector', icon: KeyRound, color: 'text-violet-400' },
+    { id: 'jwks', label: 'JWKS Validator', icon: ShieldCheck, color: 'text-purple-400' },
     { id: 'json', label: 'JSON Formatter', icon: Braces, color: 'text-emerald-400' },
     { id: 'hash', label: 'Hashes & CRC', icon: Hash, color: 'text-amber-400' },
     { id: 'k8s', label: 'K8s Manifests', icon: Layers, color: 'text-blue-400' },

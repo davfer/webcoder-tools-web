@@ -22,7 +22,8 @@ export const SettingsModal: React.FC<Props> = ({
   const detectors: { id: ToolCategory; label: string; desc: string }[] = [
     { id: 'base64', label: 'Base64 & Base32', desc: 'Inspects and decodes RFC 4648 Base64 payloads' },
     { id: 'json', label: 'JSON Inspector', desc: 'Validates syntax, formats, and executes dot-notation queries' },
-    { id: 'jwt', label: 'JWT & JWKS', desc: 'Decodes header/claims and tracks expiration' },
+    { id: 'jwt', label: 'JWT Token Inspector', desc: 'Decodes header/claims and tracks expiration' },
+    { id: 'jwks', label: 'JWKS Signature Validator', desc: 'Discovers jwks_uri via openid-configuration and validates signatures' },
     { id: 'hash', label: 'Hash & Checksums', desc: 'Calculates CRC32, MD5, SHA digests and checks passwords' },
     { id: 'uri', label: 'URI & Network', desc: 'Dissects query parameters and provides live CORS/timings ping' },
     { id: 'hexdec', label: 'Hex / Dec / Bin', desc: 'Converts between numeric bases and raw bytes' },

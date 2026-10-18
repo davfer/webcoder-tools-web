@@ -3,6 +3,7 @@ export type ToolCategory =
   | 'base64'
   | 'json'
   | 'jwt'
+  | 'jwks'
   | 'hash'
   | 'uri'
   | 'hexdec'
@@ -10,6 +11,37 @@ export type ToolCategory =
   | 'certs'
   | 'k8s'
   | 'oidc';
+
+export interface JwkKey {
+  kty: 'RSA' | 'EC' | string;
+  kid?: string;
+  use?: 'sig' | 'enc' | string;
+  alg?: string;
+  n?: string;
+  e?: string;
+  crv?: string;
+  x?: string;
+  y?: string;
+  [key: string]: any;
+}
+
+export interface JwksData {
+  keys: JwkKey[];
+}
+
+export interface JwksValidationResult {
+  status: 'verified' | 'invalid_signature' | 'key_not_found' | 'unsupported_alg' | 'error' | 'idle';
+  matchedKid?: string;
+  matchedKeyType?: string;
+  matchedAlg?: string;
+  matchedKeyUse?: string;
+  issuerUrl?: string;
+  discoveryUrl?: string;
+  jwksUri?: string;
+  totalKeysFound?: number;
+  message?: string;
+  signatureVerified: boolean;
+}
 
 export interface DetectorResult {
   id: ToolCategory;

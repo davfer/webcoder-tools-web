@@ -10,6 +10,7 @@ import { analyzeHexDec } from '../src/utils/hexDecEngine.ts';
 import { analyzeIp } from '../src/utils/ipEngine.ts';
 import { analyzeK8s } from '../src/utils/k8sEngine.ts';
 import { generatePkcePair, buildAuthorizeUrl } from '../src/utils/oidcEngine.ts';
+import { findMatchingJwk, normalizeIssuer, verifyJwtSignatureWithJwk } from '../src/utils/jwksEngine.ts';
 
 describe('Base64 Engine', () => {
   test('encodes and decodes standard Base64', () => {
@@ -187,5 +188,75 @@ describe('OAuth & OIDC Engine', () => {
     assert.ok(authUrl.includes('code_challenge='));
     assert.ok(authUrl.includes('code_challenge_method=S256'));
     assert.ok(authUrl.includes('client_id=my-client'));
+  });
+});
+
+describe('JWKS Engine & Cryptographic Signature Verification', () => {
+  test('matches kid and identifies key attributes from RFC 7517 JWKS', () => {
+    assert.equal(normalizeIssuer('accounts.google.com/'), 'https://accounts.google.com');
+
+    const sampleJwks = {
+      keys: [
+        { kty: 'RSA', kid: 'key-1', use: 'sig', alg: 'RS256', n: 'abc', e: 'AQAB' },
+        { kty: 'EC', kid: 'key-2', use: 'sig', alg: 'ES256', crv: 'P-256', x: '123', y: '456' },
+      ],
+    };
+
+    const matched = findMatchingJwk(sampleJwks, 'key-2');
+    assert.ok(matched);
+    assert.equal(matched.kid, 'key-2');
+    assert.equal(matched.kty, 'EC');
+    assert.equal(matched.alg, 'ES256');
+
+    const missing = findMatchingJwk(sampleJwks, 'key-non-existent');
+    assert.equal(missing, null);
+  });
+
+  test('cryptographically verifies valid RSA signature and rejects tampered tokens', async () => {
+    // Generate real RSA key pair
+    const keyPair = await crypto.subtle.generateKey(
+      {
+        name: 'RSASSA-PKCS1-v1_5',
+        modulusLength: 2048,
+        publicExponent: new Uint8Array([1, 0, 1]),
+        hash: 'SHA-256',
+      },
+      true,
+      ['sign', 'verify']
+    );
+
+    const publicJwk: any = await crypto.subtle.exportKey('jwk', keyPair.publicKey);
+    publicJwk.kid = 'test-kid-2026';
+    publicJwk.alg = 'RS256';
+
+    const header = { alg: 'RS256', typ: 'JWT', kid: 'test-kid-2026' };
+    const payload = { sub: 'user_123', iss: 'https://auth.webcoder.tools', exp: 1999999999 };
+
+    const b64Url = (obj: any) =>
+      btoa(JSON.stringify(obj)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+    const headerB64 = b64Url(header);
+    const payloadB64 = b64Url(payload);
+    const dataToSign = new TextEncoder().encode(`${headerB64}.${payloadB64}`);
+
+    const signatureBuf = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', keyPair.privateKey, dataToSign);
+    const sigB64 = btoa(String.fromCharCode(...new Uint8Array(signatureBuf)))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+
+    const validJwt = `${headerB64}.${payloadB64}.${sigB64}`;
+
+    // Test valid verification
+    const resValid = await verifyJwtSignatureWithJwk(validJwt, publicJwk as any);
+    assert.equal(resValid.verified, true);
+    assert.ok(resValid.message?.includes('Signature verified'));
+
+    // Test tampered payload
+    const tamperedPayloadB64 = b64Url({ ...payload, sub: 'attacker' });
+    const tamperedJwt = `${headerB64}.${tamperedPayloadB64}.${sigB64}`;
+    const resTampered = await verifyJwtSignatureWithJwk(tamperedJwt, publicJwk as any);
+    assert.equal(resTampered.verified, false);
+    assert.ok(resTampered.message?.includes('Signature mismatch'));
   });
 });
