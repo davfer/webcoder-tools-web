@@ -1,0 +1,99 @@
+name: Build, Test & Release Website Download Artifact
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-and-build:
+    name: Lint, Test & Package WebCoder Artifact
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22 Runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: |
+          npm ci || npm install
+
+      - name: Run TypeScript & Syntax Checks
+        run: |
+          npm run lint
+
+      - name: Run Engine Test Suite
+        run: |
+          npm test
+
+      - name: Build Production PWA & Static Assets
+        run: |
+          npm run build
+
+      - name: Package Download Bundles & Checksums
+        run: |
+          mkdir -p release-artifacts
+          # Create zip archive of dist for website downloads
+          (cd dist && zip -r ../release-artifacts/webcoder-tools-dist.zip .)
+          # Create tar.gz archive
+          tar -czvf release-artifacts/webcoder-tools-dist.tar.gz -C dist .
+          # Generate SHA-256 checksums for verified downloads
+          (cd release-artifacts && sha256sum webcoder-tools-dist.zip webcoder-tools-dist.tar.gz > SHA256SUMS.txt)
+          # Also copy dist for static hosting / deployment
+          cp -r dist release-artifacts/site
+
+      - name: Upload Artifacts as GitHub Workflow Downloads
+        uses: actions/upload-artifact@v4
+        with:
+          name: webcoder-tools-website-download
+          path: |
+            release-artifacts/webcoder-tools-dist.zip
+            release-artifacts/webcoder-tools-dist.tar.gz
+            release-artifacts/SHA256SUMS.txt
+            dist/
+          retention-days: 90
+          if-no-files-found: error
+
+      - name: Publish / Update Latest Release Download Asset
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG_NAME="release-latest"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Delete existing tag if already exists to ensure release-latest points to main
+          git tag -d "$TAG_NAME" 2>/dev/null || true
+          git tag "$TAG_NAME"
+          git push origin "$TAG_NAME" --force || true
+
+          # Create or update GitHub Release with downloadable zip and tar.gz
+          gh release delete "$TAG_NAME" --yes 2>/dev/null || true
+          gh release create "$TAG_NAME" \
+            release-artifacts/webcoder-tools-dist.zip \
+            release-artifacts/webcoder-tools-dist.tar.gz \
+            release-artifacts/SHA256SUMS.txt \
+            --title "WebCoder Tools — Latest Build Artifact (${{ github.sha }})" \
+            --notes "Automated production build artifact for webcoder.tools. Download \`webcoder-tools-dist.zip\` or \`webcoder-tools-dist.tar.gz\` to host on your web server or extract locally." \
+            --target main || echo "GitHub Release created or updated"

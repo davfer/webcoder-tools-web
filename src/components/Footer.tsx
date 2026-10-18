@@ -54,6 +54,16 @@ export const Footer: React.FC<Props> = ({
           <span className="hidden md:inline">GitHub</span>
         </a>
 
+        {/* Download Build Artifact link */}
+        <button
+          onClick={onOpenSettings}
+          className="flex items-center gap-1.5 text-slate-400 hover:text-cyan-300 transition-colors"
+          title="Download Built Website Artifact & CI Status"
+        >
+          <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+          <span className="hidden md:inline">Build Artifact</span>
+        </button>
+
         {/* Settings button */}
         <button
           onClick={onOpenSettings}

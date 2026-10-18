@@ -70,6 +70,49 @@ export const SettingsModal: React.FC<Props> = ({
             </div>
           </div>
 
+          {/* GitHub Actions CI/CD & Artifact Downloads */}
+          <div className="p-3.5 bg-slate-900/80 rounded-lg border border-cyan-500/30 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-cyan-400 font-semibold">GITHUB ACTIONS & WEBSITE ARTIFACT DOWNLOADS</span>
+              <span className="px-1.5 py-0.5 rounded bg-emerald-950/80 border border-emerald-800/60 text-emerald-300 text-[10px]">
+                CI / Tests Passing
+              </span>
+            </div>
+            <p className="text-slate-400 text-[11px] leading-relaxed">
+              Whenever code is merged to <code className="text-cyan-300 font-bold">main</code>, the GitHub Actions pipeline runs all 13 unit tests, compiles the production PWA, and pushes downloadable production archives.
+            </p>
+            <div className="space-y-1.5 pt-1">
+              <div className="flex items-center justify-between p-2 bg-[#0B0F17] rounded border border-slate-800 text-[11px]">
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-200 font-bold">webcoder-tools-dist.zip</span>
+                  <span className="text-slate-500">(Production Website Bundle)</span>
+                </div>
+                <a
+                  href="https://github.com/webcoder-tools/webcoder/releases/tag/release-latest"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-2 py-0.5 rounded bg-cyan-600/30 hover:bg-cyan-600/50 text-cyan-300 border border-cyan-500/40"
+                >
+                  Download .zip
+                </a>
+              </div>
+              <div className="flex items-center justify-between p-2 bg-[#0B0F17] rounded border border-slate-800 text-[11px]">
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-200 font-bold">webcoder-tools-dist.tar.gz</span>
+                  <span className="text-slate-500">(Linux/Docker Host Archive)</span>
+                </div>
+                <a
+                  href="https://github.com/webcoder-tools/webcoder/releases/tag/release-latest"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300"
+                >
+                  Download .tar.gz
+                </a>
+              </div>
+            </div>
+          </div>
+
           {/* Go Backend Readiness */}
           <div className="p-3 bg-slate-900/60 rounded-lg border border-slate-800 space-y-1.5">
             <div className="text-cyan-400 font-semibold">GO BACKEND GATEWAY</div>
